@@ -122,6 +122,40 @@ impl TryFrom<&rusqlite::Row<'_>> for Account {
     }
 }
 
+pub trait EmailTable {
+    fn get_emails(&self, account_id: i64) -> Result<Vec<Email>, rusqlite::Error>;
+    fn get_email(&self, id: i64) -> Result<Email, rusqlite::Error>;
+    fn get_last_email(&self, account_id: i64) -> Result<Email, rusqlite::Error>;
+}
+
+impl EmailTable for Connection {
+    fn get_emails(&self, account_id: i64) -> Result<Vec<Email>, rusqlite::Error> {
+        let mut stmt = self.prepare("SELECT * FROM emails WHERE account_id = ?1")?;
+        let emails = stmt
+            .query_map(params![account_id], |row| Ok(Email::try_from(row).unwrap()))?
+            .collect::<Result<Vec<Email>, _>>()?;
+        Ok(emails)
+    }
+
+    fn get_email(&self, id: i64) -> Result<Email, rusqlite::Error> {
+        let mut stmt = self.prepare("SELECT * FROM emails WHERE id = ?1")?;
+        let email = stmt
+            .query_map(params![id], |row| Ok(Email::try_from(row).unwrap()))?
+            .collect::<Result<Vec<Email>, _>>()?;
+        Ok(email[0].clone())
+    }
+
+    fn get_last_email(&self, account_id: i64) -> Result<Email, rusqlite::Error> {
+        let mut stmt =
+            self.prepare("SELECT * FROM emails WHERE account_id = ?1 ORDER BY id DESC LIMIT 1")?;
+        let email = stmt
+            .query_map(params![account_id], |row| Ok(Email::try_from(row).unwrap()))?
+            .collect::<Result<Vec<Email>, _>>()?;
+        Ok(email[0].clone())
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Email {
     pub id: i64,
     pub account_id: i64,
@@ -166,5 +200,20 @@ impl Email {
             ],
         )?;
         Ok(())
+    }
+}
+
+impl TryFrom<&rusqlite::Row<'_>> for Email {
+    type Error = rusqlite::Error;
+
+    fn try_from(row: &rusqlite::Row) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: row.get(0)?,
+            account_id: row.get(1)?,
+            subject: row.get(2)?,
+            sender: row.get(3)?,
+            date: row.get(4)?,
+            body: row.get(5)?,
+        })
     }
 }

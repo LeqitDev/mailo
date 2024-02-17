@@ -17,9 +17,9 @@
 	import type { LayoutData } from './$types';
 	import type { FormOptions } from 'formsnap';
 	import { mailAccountSchema, type MailAccount } from './schema';
+	import { invoke } from '@tauri-apps/api/tauri';
 
 	export let data: LayoutData;
-	console.log('data', data.form);
 
 	var current_mailbox = 'inbox';
 	var collapsed = true;
@@ -66,7 +66,7 @@
 						</Dialog.Footer>
 					</Dialog.Content>
 				</Dialog.Root>
-				<Button variant="outline" size="sm">Accounts</Button>
+				<Button variant="outline" size="sm" on:click={() => invoke('logout').catch((e) => console.log("invoke error", e))}>Accounts</Button>
 			</div>
 		</div>
 	</div>

@@ -2,32 +2,56 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod database;
+mod imap;
 
 use database::{get_database, Account, AccountTable};
+use imap::imap;
 use rusqlite::Connection;
+use serde::Serialize;
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
-use tauri::Manager;
+use tauri::{AppHandle, Manager, State};
+use tokio::net::TcpStream;
 
-struct AppState(Arc<Mutex<Sharable>>);
+struct AppState(Arc<Mutex<Shareble>>);
 
 #[derive(Default)]
-struct Sharable {
+struct Shareble {
     sql: Option<Connection>,
+    logout: bool,
 }
 
-impl Sharable {
+impl Shareble {
     fn new(path: PathBuf) -> Self {
         match get_database(path) {
-            Ok(conn) => Self { sql: Some(conn) },
+            Ok(conn) => Self {
+                sql: Some(conn),
+                logout: false,
+            },
             Err(e) => {
                 println!("Failed to get database connection: {:#?}", e);
-                Self { sql: None }
+                Self {
+                    sql: None,
+                    logout: false,
+                }
             }
         }
     }
+}
+
+#[derive(Clone, Serialize)]
+enum LoggerType {
+    Info,
+    Warning,
+    Error,
+}
+
+#[derive(Clone, Serialize)]
+struct LoggerPayload {
+    message: String,
+    log_type: LoggerType,
 }
 
 #[tauri::command]
@@ -67,16 +91,49 @@ fn add_account(
     }
 }
 
+#[tauri::command]
+fn logout(state: tauri::State<AppState>, app: AppHandle) {
+    println!("Logging out!");
+    if let Ok(mut state) = state.0.lock() {
+        state.logout = true;
+    }
+    app.exit(0);
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_accounts, add_account])
+        .invoke_handler(tauri::generate_handler![get_accounts, add_account, logout])
         .setup(|app| {
-            let handle = app.app_handle();
-            app.manage(AppState(Arc::new(Mutex::new(Sharable::new(
+            let handle = app.handle();
+            app.manage(AppState(Arc::new(Mutex::new(Shareble::new(
                 handle.path_resolver().app_data_dir().unwrap(),
             )))));
+            let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
+
+            tauri::async_runtime::spawn(async move {
+                imap(app_state, &handle).await;
+            });
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn logging_handler<R: tauri::Runtime, S: ToString>(
+    message: S,
+    log_type: LoggerType,
+    handle: &impl Manager<R>,
+) {
+    println!("Logging: {:#?}", message.to_string());
+    handle
+        .get_window("main")
+        .unwrap()
+        .emit(
+            "log",
+            LoggerPayload {
+                message: message.to_string(),
+                log_type,
+            },
+        )
+        .unwrap();
 }

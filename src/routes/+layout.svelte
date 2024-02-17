@@ -1,7 +1,19 @@
-<script>
+<script	lang="ts">
 	import { Button } from '@/components/ui/button';
 	import '../app.pcss';
 	import { CalendarIcon, MailIcon } from 'lucide-svelte';
+	import { listen } from '@tauri-apps/api/event';
+	import { invoke, window } from '@tauri-apps/api';
+
+    const unlisten_log = listen('log', (event) => {
+        console.log('event', event);
+    });
+    window.getCurrent().listen('tauri://close-requested', () => {
+        console.log('close-requested');
+        invoke('logout').catch((error) => {
+            console.log('error', error);
+        });
+    });
 </script>
 
 <main class="w-full h-full flex">
