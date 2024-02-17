@@ -8,6 +8,17 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	namespace Data {
+		interface Account {
+			id: string;
+			username: string;
+			email: string;
+			password: string;
+			imapHost: string;
+			imapPort: string;
+		}
+	}
 }
 
 export {};

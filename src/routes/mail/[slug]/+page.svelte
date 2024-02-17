@@ -1,8 +1,11 @@
-<script>
-    export let data;
+<script lang="ts">
 	import EmailPreview from "$lib/components/EmailPreview.svelte";
 	import { Button } from "@/components/ui/button";
-	import { selected_previews } from "@/stores/email";
+	import { selected_previews } from "@/stores/emails";
+	import type { ActionData, PageData } from './$types';
+	import { superForm } from "sveltekit-superforms/client";
+
+    export let data: PageData;
 </script>
 <div class="h-full flex flex-col">
     <div class="w-full border-b flex justify-between items-center px-2 py-1 gap-5 h-12">

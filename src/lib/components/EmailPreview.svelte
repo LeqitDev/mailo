@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selected_previews } from "@/stores/email";
+	import { selected_previews } from "@/stores/emails";
 	import { redirect } from "@sveltejs/kit";
 	import { Button } from "./ui/button";
 

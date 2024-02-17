@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { cubicOut } from "svelte/easing";
 import type { TransitionConfig } from "svelte/transition";
+import type { InvokeArgs } from "@tauri-apps/api/tauri";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -60,3 +61,17 @@ export const flyAndScale = (
         easing: cubicOut
     };
 };
+
+
+// Custom things
+export function parseAccountForm(form: FormData): InvokeArgs {
+    const account = {
+        id: "",
+        name: form.get("name") as string,
+        email: form.get("email") as string,
+        password: form.get("password") as string,
+        imapHost: form.get("imapHost") as string,
+        imapPort: form.get("imapPort") as string
+    };
+    return account;
+}
