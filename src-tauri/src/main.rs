@@ -21,6 +21,8 @@ struct AppState(Arc<Mutex<Shareble>>);
 struct Shareble {
     sql: Option<Connection>,
     logout: bool,
+    frontend_ready: bool,
+    saved_logs: Vec<LoggerPayload>,
 }
 
 impl Shareble {
@@ -29,12 +31,16 @@ impl Shareble {
             Ok(conn) => Self {
                 sql: Some(conn),
                 logout: false,
+                frontend_ready: false,
+                saved_logs: Vec::new(),
             },
             Err(e) => {
                 println!("Failed to get database connection: {:#?}", e);
                 Self {
                     sql: None,
                     logout: false,
+                    frontend_ready: false,
+                    saved_logs: Vec::new(),
                 }
             }
         }
@@ -100,9 +106,25 @@ fn logout(state: tauri::State<AppState>, app: AppHandle) {
     app.exit(0);
 }
 
+#[tauri::command]
+fn ready(state: tauri::State<AppState>, app: AppHandle) {
+    if let Ok(mut state) = state.0.lock() {
+        state.frontend_ready = true;
+        for log in state.saved_logs.iter() {
+            logging_handler(log.message.clone(), log.log_type.clone(), &app);
+        }
+        state.saved_logs.clear();
+    }
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![get_accounts, add_account, logout])
+        .invoke_handler(tauri::generate_handler![
+            get_accounts,
+            add_account,
+            logout,
+            ready
+        ])
         .setup(|app| {
             let handle = app.handle();
             app.manage(AppState(Arc::new(Mutex::new(Shareble::new(
@@ -124,16 +146,23 @@ fn logging_handler<R: tauri::Runtime, S: ToString>(
     log_type: LoggerType,
     handle: &impl Manager<R>,
 ) {
-    println!("Logging: {:#?}", message.to_string());
-    handle
-        .get_window("main")
-        .unwrap()
-        .emit(
-            "log",
-            LoggerPayload {
-                message: message.to_string(),
-                log_type,
-            },
-        )
-        .unwrap();
+    let app_state = handle.state::<AppState>().inner().0.clone();
+    if app_state.lock().unwrap().frontend_ready {
+        handle
+            .get_window("main")
+            .unwrap()
+            .emit(
+                "log",
+                LoggerPayload {
+                    message: message.to_string(),
+                    log_type,
+                },
+            )
+            .unwrap();
+    } else {
+        app_state.lock().unwrap().saved_logs.push(LoggerPayload {
+            message: message.to_string(),
+            log_type,
+        });
+    }
 }
