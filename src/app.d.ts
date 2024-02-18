@@ -27,6 +27,18 @@ declare global {
 			body: string;
 			date: string;
 			sender: string;
+			flags: EmailFlags;
+		}
+
+		interface EmailFlags {
+			seen: boolean;
+			answered: boolean;
+			flagged: boolean;
+			deleted: boolean;
+			draft: boolean;
+			recent: boolean;
+			may_create: boolean;
+			custom: string[];
 		}
 	}
 }

@@ -54,6 +54,16 @@ impl Shareble {
     }
 }
 
+trait Loggable {
+    fn log<T: ToString>(&mut self, message: T, log_type: LoggerType);
+}
+
+impl Loggable for Arc<Mutex<Shareble>> {
+    fn log<T: ToString>(&mut self, message: T, log_type: LoggerType) {
+        self.lock().unwrap().push_log(message, log_type);
+    }
+}
+
 #[derive(Clone, Serialize, Debug)]
 enum LoggerType {
     Info,
@@ -162,6 +172,17 @@ fn ready(state: tauri::State<AppState>, app: AppHandle) {
     }
 }
 
+#[tauri::command]
+fn fetch_logs(state: tauri::State<AppState>) -> Result<Vec<LoggerPayload>, String> {
+    if let Ok(mut state) = state.0.lock() {
+        let logs = state.logs.clone();
+        state.logs.clear();
+        Ok(logs)
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -171,7 +192,8 @@ fn main() {
             ready,
             get_top_emails,
             get_emails,
-            get_email
+            get_email,
+            fetch_logs
         ])
         .setup(|app| {
             let handle = app.handle();

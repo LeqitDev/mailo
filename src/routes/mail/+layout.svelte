@@ -18,11 +18,14 @@
 	import type { FormOptions } from 'formsnap';
 	import { mailAccountSchema, type MailAccount } from './schema';
 	import { invoke } from '@tauri-apps/api/tauri';
+	import { search_string } from '@/stores/search';
+	import { selected_previews } from '@/stores/emails';
 
 	export let data: LayoutData;
 
 	var current_mailbox = 'inbox';
 	var collapsed = true;
+	var search_value = '';
 </script>
 
 <div class="flex min-h-screen w-full flex-col">
@@ -44,7 +47,7 @@
 				<Select.Input value="all" />
 			</Select.Root>
 			<form class="flex w-full max-w-md items-center space-x-2">
-				<Input />
+				<Input on:input={(e) => search_string.update((v) => e.currentTarget.value)} />
 				<Button variant="ghost" size="icon" on:click={() => invoke('ready')}><SearchIcon class="h-4 w-4" /></Button>
 			</form>
 			<div>
@@ -81,25 +84,37 @@
 						variant={current_mailbox == 'inbox' ? 'outline' : 'ghost'}
 						size="icon"
 						href="/mail/inbox"
-						on:click={() => (current_mailbox = 'inbox')}><InboxIcon class="h-4 w-4" /></Button
+						on:click={() => {
+							if (current_mailbox !== 'inbox') selected_previews.update(() => []);
+							current_mailbox = 'inbox';
+						}}><InboxIcon class="h-4 w-4" /></Button
 					>
 					<Button
 						variant={current_mailbox == 'sent' ? 'outline' : 'ghost'}
 						size="icon"
 						href="/mail/sent"
-						on:click={() => (current_mailbox = 'sent')}><SendIcon class="h-4 w-4" /></Button
+						on:click={() => {
+							if (current_mailbox !== 'sent') selected_previews.update(() => []);
+							current_mailbox = 'sent';
+						}}><SendIcon class="h-4 w-4" /></Button
 					>
 					<Button
 						variant={current_mailbox == 'drafts' ? 'outline' : 'ghost'}
 						size="icon"
 						href="/mail/drafts"
-						on:click={() => (current_mailbox = 'drafts')}><FileIcon class="h-4 w-4" /></Button
+						on:click={() => {
+							if (current_mailbox !== 'drafts') selected_previews.update(() => []);
+							current_mailbox = 'drafts';
+						}}><FileIcon class="h-4 w-4" /></Button
 					>
 					<Button
 						variant={current_mailbox == 'trash' ? 'outline' : 'ghost'}
 						size="icon"
 						href="/mail/trash"
-						on:click={() => (current_mailbox = 'trash')}><Trash2Icon class="h-4 w-4" /></Button
+						on:click={() => {
+							if (current_mailbox !== 'trash') selected_previews.update(() => []);
+							current_mailbox = 'trash';
+						}}><Trash2Icon class="h-4 w-4" /></Button
 					>
 				</div>
 			</div>

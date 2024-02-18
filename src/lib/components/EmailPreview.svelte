@@ -2,19 +2,20 @@
 	import { selected_previews } from "@/stores/emails";
 	import { redirect } from "@sveltejs/kit";
 	import { Button } from "./ui/button";
+	import { formatTimestamp } from "@/utils";
+	import { search_string } from "@/stores/search";
 
-	export let email: Data.Email | undefined = undefined;
-	export var new_email: boolean = false;
-	export var from: string = 'Giesel, Jürgen';
-	export var subject: string =
-		'(UE) Programmierung (Übung - Tutorium): Selbstlernmodule "Python4Java" und "C- und Shell-Programmierung"';
-	export var body: string =
-		'Liebe Studierende, in den Semesterferien (vor Besuch der Vorlesungen "Datenstrukturen und Algorithmen" bzw. "Betriebssysteme und Systemsoftware") sollten Sie zwei Selbstlernmodule absolvieren. Diese bauen auf dem Stoff in der "Programmierung" auf und vermitteln Ihnen die Grundlagen in Python bzw. C. Hier sind zwei kurze Texte mit dem jeweiligen Moodle-Link für die beiden Module:';
-	export var time: string = '2 min ago';
-	export var id: number
+	export let email: Data.Email;
+	export var id: number;
 
 	var checked: boolean = false;
 	var redirect_btn: HTMLAnchorElement;
+	var hidden: boolean = false;
+
+	const [datePart, timePart] = email.date.split(' ');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes, seconds] = timePart.split(':').map(Number);
+    const date = new Date(year, month - 1, day, hours, minutes, seconds);
 
 	selected_previews.subscribe((value) => {
 		if (value.includes(id)) {
@@ -54,18 +55,32 @@
 		}
 		console.log($selected_previews);
 	}
+
+	search_string.subscribe((value) => {
+		if (value) {
+			if (email.sender.toLowerCase().includes(value.toLowerCase()) || email.subject.toLowerCase().includes(value.toLowerCase()) || email.body.toLowerCase().includes(value.toLowerCase())) {
+				hidden = false;
+			} else {
+				hidden = true;
+			}
+		} else {
+			hidden = false;
+		}
+	});
 </script>
 {#if email}
 	<a class="hidden" href="/mail/view/{email.id}" bind:this={redirect_btn}>Redirect</a>
 	<button
-		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none bg-"
+		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none"
 		class:bg-border={checked}
+		class:hover:bg-muted={!checked}
+		class:hidden={hidden}
 		on:dblclick={() => {
 			redirect_btn.click();
 		}}
 		on:click={onEmailClicked}
 	>
-		{#if new_email}
+		{#if !email.flags.seen}
 			<div class="h-full pt-1">
 				<div class="block h-3 w-3 max-w-4 rounded-full bg-blue-500" />
 			</div>
@@ -80,7 +95,7 @@
 			</p>
 		</div>
 		<div>
-			<p class="w-max text-muted-foreground">{email.date}</p>
+			<p class="w-max text-muted-foreground">{formatTimestamp(date)}</p>
 		</div>
 	</button>
 {/if}

@@ -4,6 +4,7 @@
 	import { CalendarIcon, MailIcon } from 'lucide-svelte';
 	import { listen } from '@tauri-apps/api/event';
 	import { invoke, window } from '@tauri-apps/api';
+	import { attachConsole } from 'tauri-plugin-log-api';
 
     const unlisten_log = listen('log', (event) => {
         console.log('event', event);
@@ -14,9 +15,18 @@
             console.log('error', error);
         });
     });
-    invoke('ready').finally(() => {
-        console.log('ready');
-    });
+
+    fetch_logs();
+
+    async function fetch_logs() {
+        const logs = await invoke('fetch_logs') as { type: string, message: string }[];
+        if (logs.length > 0) {
+            console.log('logs', logs);
+        }
+        setTimeout(fetch_logs, 2000);
+    }
+
+    const detach_log = attachConsole();
 </script>
 
 <main class="w-full h-full flex">
