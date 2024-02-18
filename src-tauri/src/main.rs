@@ -4,7 +4,7 @@
 mod database;
 mod imap;
 
-use database::{get_database, Account, AccountTable};
+use database::{get_database, Account, AccountTable, Email, EmailTable};
 use imap::imap;
 use rusqlite::Connection;
 use serde::Serialize;
@@ -22,7 +22,7 @@ struct Shareble {
     sql: Option<Connection>,
     logout: bool,
     frontend_ready: bool,
-    saved_logs: Vec<LoggerPayload>,
+    logs: Vec<LoggerPayload>,
 }
 
 impl Shareble {
@@ -32,7 +32,7 @@ impl Shareble {
                 sql: Some(conn),
                 logout: false,
                 frontend_ready: false,
-                saved_logs: Vec::new(),
+                logs: Vec::new(),
             },
             Err(e) => {
                 println!("Failed to get database connection: {:#?}", e);
@@ -40,21 +40,28 @@ impl Shareble {
                     sql: None,
                     logout: false,
                     frontend_ready: false,
-                    saved_logs: Vec::new(),
+                    logs: Vec::new(),
                 }
             }
         }
     }
+
+    fn push_log<T: ToString>(&mut self, message: T, log_type: LoggerType) {
+        self.logs.push(LoggerPayload {
+            message: message.to_string(),
+            log_type,
+        });
+    }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 enum LoggerType {
     Info,
     Warning,
     Error,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 struct LoggerPayload {
     message: String,
     log_type: LoggerType,
@@ -98,6 +105,48 @@ fn add_account(
 }
 
 #[tauri::command]
+fn get_emails(state: tauri::State<AppState>) -> Result<Vec<Email>, String> {
+    if let Ok(state) = state.0.lock() {
+        if let Some(conn) = &state.sql {
+            let emails = conn.get_emails(1).map_err(|e| e.to_string())?;
+            Ok(emails)
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_top_emails(state: tauri::State<AppState>) -> Result<Vec<Email>, String> {
+    if let Ok(state) = state.0.lock() {
+        if let Some(conn) = &state.sql {
+            let emails = conn.get_last_hundred_emails(1).map_err(|e| e.to_string())?;
+            Ok(emails)
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
+fn get_email(state: tauri::State<AppState>, id: i64) -> Result<Email, String> {
+    if let Ok(state) = state.0.lock() {
+        if let Some(conn) = &state.sql {
+            let email = conn.get_email(id).map_err(|e| e.to_string())?;
+            Ok(email)
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
 fn logout(state: tauri::State<AppState>, app: AppHandle) {
     println!("Logging out!");
     if let Ok(mut state) = state.0.lock() {
@@ -110,10 +159,6 @@ fn logout(state: tauri::State<AppState>, app: AppHandle) {
 fn ready(state: tauri::State<AppState>, app: AppHandle) {
     if let Ok(mut state) = state.0.lock() {
         state.frontend_ready = true;
-        for log in state.saved_logs.iter() {
-            logging_handler(log.message.clone(), log.log_type.clone(), &app);
-        }
-        state.saved_logs.clear();
     }
 }
 
@@ -123,46 +168,51 @@ fn main() {
             get_accounts,
             add_account,
             logout,
-            ready
+            ready,
+            get_top_emails,
+            get_emails,
+            get_email
         ])
         .setup(|app| {
             let handle = app.handle();
             app.manage(AppState(Arc::new(Mutex::new(Shareble::new(
                 handle.path_resolver().app_data_dir().unwrap(),
             )))));
+
+            let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
+            let second_handle = handle.clone();
+
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    if app_state.lock().unwrap().logout {
+                        break;
+                    }
+                    if app_state.lock().unwrap().frontend_ready {
+                        let logs = app_state.lock().unwrap().logs.clone();
+                        app_state.lock().unwrap().logs.clear();
+                        if !logs.is_empty() {
+                            println!("Sending logs to frontend: {:#?}", logs);
+                            // weird thing the third event does not fire
+                            for log in logs {
+                                second_handle
+                                    .get_window("main")
+                                    .unwrap()
+                                    .emit("log", log)
+                                    .unwrap();
+                            }
+                        }
+                    }
+                    tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+                }
+            });
+
             let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
 
             tauri::async_runtime::spawn(async move {
-                imap(app_state, &handle).await;
+                imap(app_state).await;
             });
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-fn logging_handler<R: tauri::Runtime, S: ToString>(
-    message: S,
-    log_type: LoggerType,
-    handle: &impl Manager<R>,
-) {
-    let app_state = handle.state::<AppState>().inner().0.clone();
-    if app_state.lock().unwrap().frontend_ready {
-        handle
-            .get_window("main")
-            .unwrap()
-            .emit(
-                "log",
-                LoggerPayload {
-                    message: message.to_string(),
-                    log_type,
-                },
-            )
-            .unwrap();
-    } else {
-        app_state.lock().unwrap().saved_logs.push(LoggerPayload {
-            message: message.to_string(),
-            log_type,
-        });
-    }
 }

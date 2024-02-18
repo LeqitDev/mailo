@@ -1,7 +1,7 @@
 <script lang="ts">
 	import EmailPreview from "$lib/components/EmailPreview.svelte";
 	import { Button } from "@/components/ui/button";
-	import { selected_previews } from "@/stores/emails";
+	import { emails, selected_previews } from "@/stores/emails";
 	import type { ActionData, PageData } from './$types';
 	import { superForm } from "sveltekit-superforms/client";
 
@@ -23,8 +23,8 @@
         {/if}
     </div>
     <div class="flex-1 overflow-y-auto">
-        {#each Array.from({ length: 100 }, (_, i) => i) as id}
-            <EmailPreview id={id} />
+        {#each $emails as email, id}
+            <EmailPreview {id} {email} />
         {/each}
     </div>
 </div>

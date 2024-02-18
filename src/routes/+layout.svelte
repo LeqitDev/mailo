@@ -14,6 +14,9 @@
             console.log('error', error);
         });
     });
+    invoke('ready').finally(() => {
+        console.log('ready');
+    });
 </script>
 
 <main class="w-full h-full flex">

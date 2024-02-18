@@ -3,6 +3,7 @@
 	import { redirect } from "@sveltejs/kit";
 	import { Button } from "./ui/button";
 
+	export let email: Data.Email | undefined = undefined;
 	export var new_email: boolean = false;
 	export var from: string = 'Giesel, Jürgen';
 	export var subject: string =
@@ -54,31 +55,32 @@
 		console.log($selected_previews);
 	}
 </script>
-
-<a class="hidden" href="/mail/view/1" bind:this={redirect_btn}>Redirect</a>
-<button
-	class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none bg-"
-	class:bg-border={checked}
-	on:dblclick={() => {
-		redirect_btn.click();
-	}}
-	on:click={onEmailClicked}
->
-	{#if new_email}
-		<div class="h-full pt-1">
-			<div class="block h-3 w-3 max-w-4 rounded-full bg-blue-500" />
+{#if email}
+	<a class="hidden" href="/mail/view/{email.id}" bind:this={redirect_btn}>Redirect</a>
+	<button
+		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none bg-"
+		class:bg-border={checked}
+		on:dblclick={() => {
+			redirect_btn.click();
+		}}
+		on:click={onEmailClicked}
+	>
+		{#if new_email}
+			<div class="h-full pt-1">
+				<div class="block h-3 w-3 max-w-4 rounded-full bg-blue-500" />
+			</div>
+		{/if}
+		<div class="flex-grow">
+			<h2 class="font-bold">{email.sender}</h2>
+			<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
+				{email.subject}
+			</h3>
+			<p class="line-clamp-1 overflow-ellipsis text-muted-foreground">
+				{email.body.replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
+			</p>
 		</div>
-	{/if}
-	<div class="flex-grow">
-		<h2 class="font-bold">{from}</h2>
-		<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
-			{subject}
-		</h3>
-		<p class="line-clamp-1 overflow-ellipsis text-muted-foreground">
-			{body}
-		</p>
-	</div>
-	<div>
-		<p class="w-max text-muted-foreground">{time}</p>
-	</div>
-</button>
+		<div>
+			<p class="w-max text-muted-foreground">{email.date}</p>
+		</div>
+	</button>
+{/if}

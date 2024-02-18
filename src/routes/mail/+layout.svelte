@@ -45,7 +45,7 @@
 			</Select.Root>
 			<form class="flex w-full max-w-md items-center space-x-2">
 				<Input />
-				<Button variant="ghost" size="icon"><SearchIcon class="h-4 w-4" /></Button>
+				<Button variant="ghost" size="icon" on:click={() => invoke('ready')}><SearchIcon class="h-4 w-4" /></Button>
 			</form>
 			<div>
 				<Button variant="outline" size="sm" on:click={() => fetchAccounts()}>Settings</Button>

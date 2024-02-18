@@ -67,11 +67,11 @@ export const flyAndScale = (
 export function parseAccountForm(form: FormData): InvokeArgs {
     const account = {
         id: "",
-        name: form.get("name") as string,
+        username: form.get("username") as string,
         email: form.get("email") as string,
         password: form.get("password") as string,
-        imapHost: form.get("imapHost") as string,
-        imapPort: form.get("imapPort") as string
+        imapHost: form.get("imap_host") as string,
+        imapPort: parseInt(form.get("imap_port") as string)
     };
     return account;
 }

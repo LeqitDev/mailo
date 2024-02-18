@@ -18,6 +18,16 @@ declare global {
 			imapHost: string;
 			imapPort: string;
 		}
+
+		interface Email {
+			id: string;
+			email_id: string;
+			account_id: string;
+			subject: string;
+			body: string;
+			date: string;
+			sender: string;
+		}
 	}
 }
 
