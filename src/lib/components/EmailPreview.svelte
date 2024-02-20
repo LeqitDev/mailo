@@ -3,14 +3,14 @@
 	import { redirect } from "@sveltejs/kit";
 	import { Button } from "./ui/button";
 	import { formatTimestamp } from "@/utils";
-	import { search_string } from "@/stores/search";
+	import { search_string } from "@/stores/settings";
+	import { onMount } from "svelte";
 
 	export let email: Data.Email;
 	export var id: number;
 
 	var checked: boolean = false;
 	var redirect_btn: HTMLAnchorElement;
-	var hidden: boolean = false;
 
 	const [datePart, timePart] = email.date.split(' ');
     const [year, month, day] = datePart.split('-').map(Number);
@@ -56,17 +56,24 @@
 		console.log($selected_previews);
 	}
 
-	search_string.subscribe((value) => {
-		if (value) {
-			if (email.sender.toLowerCase().includes(value.toLowerCase()) || email.subject.toLowerCase().includes(value.toLowerCase()) || email.body.toLowerCase().includes(value.toLowerCase())) {
-				hidden = false;
-			} else {
-				hidden = true;
-			}
-		} else {
-			hidden = false;
+	let button: HTMLButtonElement;
+	let inView: boolean = false;
+
+	onMount(() => {
+		if (button) {
+			inView = isInView(button);
 		}
 	});
+
+	function isInView(el: HTMLElement) {
+		const rect = el.getBoundingClientRect();
+		return (
+			rect.top >= 0 &&
+			rect.left >= 0 &&
+			rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+			rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+		);
+	}
 </script>
 {#if email}
 	<a class="hidden" href="/mail/view/{email.id}" bind:this={redirect_btn}>Redirect</a>
@@ -74,11 +81,11 @@
 		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none"
 		class:bg-border={checked}
 		class:hover:bg-muted={!checked}
-		class:hidden={hidden}
 		on:dblclick={() => {
 			redirect_btn.click();
 		}}
 		on:click={onEmailClicked}
+		bind:this={button}
 	>
 		{#if !email.flags.seen}
 			<div class="h-full pt-1">

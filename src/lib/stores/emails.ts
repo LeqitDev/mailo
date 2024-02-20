@@ -7,10 +7,10 @@ export const emails: Writable<Data.Email[]> = writable([]);
 await fetchEmails();
 
 export async function fetchEmails() {
-    invoke('get_top_emails').then((fetched_emails) => {
+    invoke('get_emails').then((fetched_emails) => {
         emails.set(fetched_emails as Data.Email[]);
-        console.log('fetched_emails', fetched_emails as Data.Email[]);
+        // console.log('fetched_emails', fetched_emails as Data.Email[]);
     }).catch((error) => {
-        console.log('error', error);
+        console.log('error fetching emails', error);
     });
 }

@@ -19,17 +19,25 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>) {
     // sleeep
     tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     match initiliaze_imap(&mut app_state).await {
-        Ok(mut session) => {
+        Ok(session) => {
+            let mut idle = session.idle();
+            idle.init().await.unwrap();
+            let cpy_app_state = app_state.clone();
+            tokio::spawn(async move {
+                let mut app_state = cpy_app_state.lock().unwrap();
+                app_state.frontend_ready = true;
+            });
             loop {
+                let (idle_wait, interrupt) = idle.wait();
                 if app_state.lock().unwrap().logout {
                     break;
                 }
             }
+            let mut session = idle.done().await.unwrap();
             app_state
                 .lock()
                 .unwrap()
                 .push_log("Logging out from imap!", LoggerType::Info);
-            println!("Logging out for real!");
             if let Err(e) = session.logout().await {
                 app_state.lock().unwrap().push_log(e, LoggerType::Error);
             }
