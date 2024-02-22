@@ -204,7 +204,7 @@ fn main() {
             let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
             let second_handle = handle.clone();
 
-            tauri::async_runtime::spawn(async move {
+            /* tauri::async_runtime::spawn(async move {
                 loop {
                     if app_state.lock().unwrap().logout {
                         break;
@@ -226,7 +226,7 @@ fn main() {
                     }
                     tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
                 }
-            });
+            }); */
 
             let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
 

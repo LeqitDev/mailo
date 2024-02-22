@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/tauri';
 
 export const accounts: Writable<Data.Account[]> = writable([]);
 
-await fetchAccounts();
+fetchAccounts();
 
 export async function fetchAccounts() {
     invoke('get_accounts').then((fetched_accounts) => {

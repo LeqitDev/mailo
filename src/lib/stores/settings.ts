@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
 
 export const search_string = writable('');
 
@@ -12,3 +12,5 @@ export function searchEmail(email: Data.Email, search_string: string) {
 
 export const theme = writable('light');
 export const lazyloadingenabled = writable(true);
+
+export const logs: Writable<{ type: string, message: string }[]> = writable([]);

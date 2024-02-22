@@ -13,14 +13,14 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { accounts, fetchAccounts } from '@/stores/accounts';
-	import MailAccountForm from './MailAccountForm.svelte';
+	import MailAccountForm from '$lib/custom/components/MailAccountForm.svelte';
 	import type { LayoutData } from './$types';
 	import type { FormOptions } from 'formsnap';
-	import { mailAccountSchema, type MailAccount } from './schema';
+	import { mailAccountSchema, type MailAccount } from '$lib/custom/components/schema';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { expandedSidenav, search_string } from '@/stores/settings';
 	import { selected_previews } from '@/stores/emails';
-	import CustomLayout from '../_customLayout.svelte';
+	import CustomLayout from '$lib/custom/layouts/_customLayout.svelte';
 	import { fade, fly, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 

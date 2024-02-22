@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { selected_previews } from "@/stores/emails";
 	import { redirect } from "@sveltejs/kit";
-	import { Button } from "./ui/button";
+	import { Button } from "../../components/ui/button";
 	import { formatTimestamp } from "@/utils";
 	import { search_string } from "@/stores/settings";
 	import { onMount } from "svelte";

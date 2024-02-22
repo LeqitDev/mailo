@@ -1,6 +1,6 @@
 <script	lang="ts">
 	import { Button } from '@/components/ui/button';
-	import '../app.pcss';
+	import '../../../app.pcss';
 	import { ArrowLeftFromLine, ArrowRightFromLine, CalendarIcon, HomeIcon, MailIcon, SchoolIcon } from 'lucide-svelte';
 	import { listen } from '@tauri-apps/api/event';
 	import { invoke, window } from '@tauri-apps/api';
@@ -10,7 +10,7 @@
 	import { cubicInOut, cubicOut } from 'svelte/easing';
 	import { fade, slide, type TransitionConfig } from 'svelte/transition';
 	import { number } from 'zod';
-	import { expandedSidenav } from '@/stores/settings';
+	import { expandedSidenav, logs } from '@/stores/settings';
 
     const unlisten_log = listen('log', (event) => {
         console.log('event', event);
@@ -25,9 +25,12 @@
     fetch_logs();
 
     async function fetch_logs() {
-        const logs = await invoke('fetch_logs') as { type: string, message: string }[];
-        if (logs.length > 0) {
-            console.log('logs', logs);
+        const new_logs = await invoke('fetch_logs') as { type: string, message: string }[];
+        if (new_logs.length > 0) {
+            console.log('logs', new_logs);
+            logs.update((old_logs) => {
+                return [...old_logs, ...new_logs];
+            });
         }
         setTimeout(fetch_logs, 2000);
     }

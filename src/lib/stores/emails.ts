@@ -4,7 +4,7 @@ import { writable, type Writable } from 'svelte/store';
 export const selected_previews: Writable<number[]> = writable([]);
 export const emails: Writable<Data.Email[]> = writable([]);
 
-await fetchEmails();
+fetchEmails();
 
 export async function fetchEmails() {
     invoke('get_emails').then((fetched_emails) => {

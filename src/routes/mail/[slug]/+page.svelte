@@ -1,5 +1,5 @@
 <script lang="ts">
-	import EmailPreview from "$lib/components/EmailPreview.svelte";
+	import EmailPreview from "@/custom/components/EmailPreview.svelte";
 	import { Button } from "@/components/ui/button";
 	import { emails, fetchEmails, selected_previews } from "@/stores/emails";
 	import type { ActionData, PageData } from './$types';

@@ -175,7 +175,7 @@ impl EmailTable for Connection {
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]
-struct EmailFlags {
+pub struct EmailFlags {
     seen: bool,
     answered: bool,
     flagged: bool,

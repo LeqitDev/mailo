@@ -140,7 +140,6 @@ async fn initiliaze_imap(
             }
         },
     }
-
-    println!("Returning imap_session!");
+    
     Ok(imap_session)
 }
