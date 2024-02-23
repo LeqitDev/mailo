@@ -2,6 +2,7 @@ import { writable, type Writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/tauri';
 
 export const accounts: Writable<Data.Account[]> = writable([]);
+export const selected_account: Writable<Data.Account | null> = writable(null);
 
 fetchAccounts();
 

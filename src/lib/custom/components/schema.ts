@@ -5,7 +5,7 @@ export const mailAccountSchema = z.object({
     username: z.string().min(1),
     password: z.string().min(1),
     imap_host: z.string().min(1),
-    imap_port: z.string().min(1),
+    imap_port: z.number().min(1),
     });
 
 export type MailAccount = typeof mailAccountSchema;

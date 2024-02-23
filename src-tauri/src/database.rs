@@ -12,7 +12,7 @@ pub fn get_database(mut path: PathBuf) -> Result<Connection, Box<dyn Error>> {
         "
         CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
             username TEXT NOT NULL,
             password TEXT NOT NULL,
             imap_server TEXT NOT NULL,

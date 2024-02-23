@@ -12,11 +12,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { accounts, fetchAccounts } from '@/stores/accounts';
+	import { accounts, fetchAccounts, selected_account } from '@/stores/accounts';
 	import MailAccountForm from '$lib/custom/components/MailAccountForm.svelte';
 	import type { LayoutData } from './$types';
-	import type { FormOptions } from 'formsnap';
-	import { mailAccountSchema, type MailAccount } from '$lib/custom/components/schema';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { expandedSidenav, search_string } from '@/stores/settings';
 	import { selected_previews } from '@/stores/emails';
@@ -28,6 +26,8 @@
 
 	var current_mailbox = 'inbox';
 	var ready = false;
+
+	var openAddAccountDialog = false;
 
 	onMount(() => {
 		ready = true;
@@ -123,17 +123,18 @@
 	<div class="flex min-h-screen w-full flex-col">
 		<div class="select-none border-b px-2 pb-1 pt-2">
 			<div class="flex justify-between">
-				<Select.Root>
-					<!-- selected={{value: "all", label: "All"}} -->
-					<Select.Trigger class="max-w-sm" value="all">
-						<Select.Value placeholder="Mail-Account" />
+				<Select.Root selected={{value: "default", label: $accounts.length > 0 ? "All" : "No accounts"}} onSelectedChange={(selectedValue) => selected_account.set($accounts.find((value) => value.id === selectedValue?.value) ?? null)}>
+					<Select.Trigger class="max-w-sm" value="default">
+						<Select.Value placeholder="Select Mailaccount" />
 					</Select.Trigger>
 					<Select.Content>
-						{#if $accounts}
-							<Select.Item value="all">All</Select.Item>
+						{#if $accounts.length > 0}
+							<Select.Item value="default">All</Select.Item>
 							{#each $accounts as account}
 								<Select.Item value={account.id}>{account.email}</Select.Item>
 							{/each}
+						{:else}
+							<Select.Item value="default">No accounts</Select.Item>
 						{/if}
 					</Select.Content>
 					<Select.Input value="all" />
@@ -146,7 +147,7 @@
 				</form>
 				<div>
 					<Button variant="outline" size="sm" on:click={() => fetchAccounts()}>Settings</Button>
-					<Dialog.Root>
+					<Dialog.Root bind:open={openAddAccountDialog}>
 						<Dialog.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}
 							>Add Account</Dialog.Trigger
 						>
@@ -157,7 +158,7 @@
 									Add a new account with imap to your mail client.
 								</Dialog.Description>
 							</Dialog.Header>
-							<MailAccountForm form={data.form} />
+							<MailAccountForm form={data.form} onSuccessfulSubmit={() => {openAddAccountDialog = false}} />
 							<Dialog.Footer>
 								<Button type="submit" form="mail-account-form">Save account</Button>
 							</Dialog.Footer>

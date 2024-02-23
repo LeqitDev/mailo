@@ -6,6 +6,7 @@
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { lazyloadingenabled, searchEmail, search_string } from "@/stores/settings";
+	import { selected_account } from "@/stores/accounts";
 
     export let data: PageData;
 	$: ready = false;
@@ -21,6 +22,7 @@
 
     $: filteredEmails = $emails.filter(email => {
         if (!searchEmail(email, $search_string)) return false;
+        if ($selected_account && email.account_id !== $selected_account.id) return false;
         switch (data.slug) {
             case 'inbox':
                 return true;
@@ -68,7 +70,7 @@
                 </div>
             {/if}
         </div>
-        <div class="flex-1 overflow-y-auto scrollbar-thin" bind:this={email_view} on:scroll={onScroll}>
+        <div class="flex-1 overflow-y-auto" bind:this={email_view} on:scroll={onScroll}>
             {#each filteredEmails.slice(0, visible_emails) as email, id (email.id)}
                 <EmailPreview {id} {email} />
             {/each}

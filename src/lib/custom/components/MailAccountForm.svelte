@@ -5,17 +5,23 @@
 	import type { FormOptions } from "formsnap";
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { parseAccountForm } from "@/utils";
+	import { fetchAccounts } from "@/stores/accounts";
+    import { toast } from "svelte-sonner";
 
     export let id = "mail-account-form";
     export let form: SuperValidated<MailAccount>;
+    export let onSuccessfulSubmit: () => void = () => {};
 
     const options: FormOptions<MailAccount> = {
         validators: mailAccountSchema,
+        applyAction: false,
         onSubmit: (values) => {
             var form = new FormData(values.formElement);
             
             invoke('add_account', parseAccountForm(form)).then((result) => {
-                console.log('result', result);
+                onSuccessfulSubmit();
+                fetchAccounts();
+                toast('Account added successfully');
             }).catch((error) => {
                 console.log('error', error);
             });

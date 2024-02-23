@@ -1,20 +1,29 @@
 <script	lang="ts">
 	import { Button } from '@/components/ui/button';
-	import '../../../app.pcss';
+	import '§/app.pcss';
 	import { ArrowLeftFromLine, ArrowRightFromLine, CalendarIcon, HomeIcon, MailIcon, SchoolIcon } from 'lucide-svelte';
 	import { listen } from '@tauri-apps/api/event';
 	import { invoke, window } from '@tauri-apps/api';
 	import { attachConsole } from 'tauri-plugin-log-api';
     import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { cubicInOut, cubicOut } from 'svelte/easing';
-	import { fade, slide, type TransitionConfig } from 'svelte/transition';
-	import { number } from 'zod';
 	import { expandedSidenav, logs } from '@/stores/settings';
+	import { Toaster } from '@/components/ui/sonner';
+	import { toast } from 'svelte-sonner';
+	import { fetchEmails } from '@/stores/emails';
 
     const unlisten_log = listen('log', (event) => {
+        toast((event as unknown as { type: string, message: string }).message);
         console.log('event', event);
     });
+
+    const unlisten_action = listen('action', (event) => {
+        if ((event as unknown as { action: string, payload: string }).action === 'fetch_emails') {
+            fetchEmails();
+        }
+        console.log('event', event);
+    });
+
     window.getCurrent().listen('tauri://close-requested', () => {
         console.log('close-requested');
         invoke('logout').catch((error) => {
@@ -28,11 +37,14 @@
         const new_logs = await invoke('fetch_logs') as { type: string, message: string }[];
         if (new_logs.length > 0) {
             console.log('logs', new_logs);
+            for (const log of new_logs) {
+                toast(log.message);
+            }
             logs.update((old_logs) => {
                 return [...old_logs, ...new_logs];
             });
         }
-        setTimeout(fetch_logs, 2000);
+        // setTimeout(fetch_logs, 2000);
     }
 
     const detach_log = attachConsole();
@@ -42,6 +54,8 @@
 		ready = true;
 	});
 </script>
+
+<Toaster />
 
 <main class="w-full h-full flex">
     {#if $expandedSidenav}
