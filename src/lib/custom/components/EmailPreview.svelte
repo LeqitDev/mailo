@@ -89,7 +89,7 @@
 	>
 		{#if !email.flags.seen}
 			<div class="h-full pt-1">
-				<div class="block h-3 w-3 max-w-4 rounded-full bg-blue-500" />
+				<div class="block h-2 w-2 max-w-4 rounded-full bg-blue-500" />
 			</div>
 		{/if}
 		<div class="flex-grow">
@@ -97,8 +97,8 @@
 			<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
 				{email.subject}
 			</h3>
-			<p class="line-clamp-1 overflow-ellipsis text-muted-foreground">
-				{email.body.replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
+			<p class="line-clamp-2 overflow-ellipsis text-muted-foreground">
+				{email.body.replaceAll(/\r?\n|\r|\n\r|<br>|<br\>/g, " ").replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
 			</p>
 		</div>
 		<div>

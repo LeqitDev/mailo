@@ -6,17 +6,14 @@ use async_imap::Session;
 use async_native_tls::TlsStream;
 use futures::TryStreamExt;
 use mail_parser::MessageParser;
-use tauri::Manager;
 use tokio::net::TcpStream;
 
 use crate::{
-    database::{Account, AccountTable, Email, EmailTable},
-    EventDispatcher, LoggerType, Shareble,
+    app_state::EventDispatcher, database::{Account, Email, EmailTable}, Shareble
 };
 
 pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
     // sleeep
-    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     match initiliaze_imap(&mut app_state, account.clone()).await {
         Ok(session) => {
             let mut idle = session.idle();
@@ -45,9 +42,9 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                             let bytes = data.borrow_owner().to_vec();
                             let msg = from_utf8(bytes.as_slice()).unwrap_or("");
                             let splitted_msg: Vec<&str> = msg.split(" ").collect();
-                            let email_id = msg.split(" ").collect::<Vec<&str>>().get(1).unwrap_or(&"").parse::<u32>().unwrap_or(0);
+                            let email_id = splitted_msg.get(1).unwrap_or(&"").parse::<u32>().unwrap_or(0);
                             println!("New data: {} {}", msg, email_id);
-                            if msg.contains("EXISTS") {
+                            if splitted_msg.get(2).unwrap().contains("EXISTS") {
                                 let mut session = idle.done().await.unwrap();
                                 fetch_emails(&mut app_state, &mut session, account.clone(), email_id).await;
                                 app_state.action("fetch_emails", "");
@@ -61,7 +58,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                     app_state.log_error(idle_result.err().unwrap());
                 }
             }
-            let mut session = idle.done().await.unwrap();
+            let mut session = idle.done().await.unwrap(); // TODO: is error sometimes?
             app_state
                 .log_info("Logging out from imap!");
             println!("Logging out from imap!");
@@ -119,10 +116,10 @@ async fn initiliaze_imap(
         Err(e) => match e {
             rusqlite::Error::QueryReturnedNoRows => {
                 fetch_emails(app_state, &mut imap_session, account, 1).await;
-                app_state.log("No emails found in the database!", LoggerType::Info);
+                app_state.log_info("No emails found in the database!");
             }
             _ => {
-                app_state.log(e.to_string(), LoggerType::Error);
+                app_state.log_info(e.to_string());
             }
         },
     }
@@ -133,9 +130,8 @@ async fn initiliaze_imap(
 async fn fetch_emails(app_state: &mut Arc<Mutex<Shareble>>, session: &mut Session<TlsStream<TcpStream>>, account: Account, from: u32) {
     let messages_stream = session.fetch(format!("{}:*", from), "BODY.PEEK[]").await.unwrap();
     let messages: Vec<_> = messages_stream.try_collect().await.unwrap();
-    app_state.log(
-        format!("Fetched {} new emails!", messages.len()),
-        LoggerType::Info,
+    app_state.log_info(
+        format!("Fetched {} new emails!", messages.len())
     );
     for raw_message in messages {
         let flags: Vec<_> = raw_message.flags().collect();

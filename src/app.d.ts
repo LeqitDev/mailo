@@ -40,6 +40,21 @@ declare global {
 			may_create: boolean;
 			custom: string[];
 		}
+
+		interface EventPayload {
+			event: string;
+			payload: LogPayload | ActionPayload;
+		}
+
+		interface LogPayload {
+			message: string;
+			log_type: string;
+		}
+
+		interface ActionPayload {
+			action: string;
+			payload: any;
+		}
 	}
 }
 

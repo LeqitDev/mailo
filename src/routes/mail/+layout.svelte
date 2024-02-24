@@ -141,7 +141,7 @@
 				</Select.Root>
 				<form class="flex w-full max-w-md items-center space-x-2">
 					<Input on:input={(e) => search_string.update((v) => e.currentTarget.value)} />
-					<Button variant="ghost" size="icon" on:click={() => invoke('ready')}
+					<Button variant="ghost" size="icon" on:click={() => invoke('ready').then(() => console.log('ready'))}
 						><SearchIcon class="h-4 w-4" /></Button
 					>
 				</form>

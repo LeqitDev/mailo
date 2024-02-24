@@ -3,29 +3,22 @@
 	import '§/app.pcss';
 	import { ArrowLeftFromLine, ArrowRightFromLine, CalendarIcon, HomeIcon, MailIcon, SchoolIcon } from 'lucide-svelte';
 	import { listen } from '@tauri-apps/api/event';
-	import { invoke, window } from '@tauri-apps/api';
+	import { invoke } from '@tauri-apps/api';
+    import * as tauri_window from '@tauri-apps/api/window';
 	import { attachConsole } from 'tauri-plugin-log-api';
     import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { expandedSidenav, logs } from '@/stores/settings';
+	import { expandedSidenav, initialize_events, logs, readyCheck, theme } from '@/stores/settings';
 	import { Toaster } from '@/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
 	import { fetchEmails } from '@/stores/emails';
+	import { browser } from '$app/environment';
 
-    const unlisten_log = listen('log', (event) => {
-        toast((event as unknown as { type: string, message: string }).message);
-        console.log('event', event);
-    });
+    
 
-    const unlisten_action = listen('action', (event) => {
-        if ((event as unknown as { action: string, payload: string }).action === 'fetch_emails') {
-            fetchEmails();
-        }
-        console.log('event', event);
-    });
-
-    window.getCurrent().listen('tauri://close-requested', () => {
+    tauri_window.getCurrent().listen('tauri://close-requested', () => {
         console.log('close-requested');
+        toast.loading('Closing sessions, saving data...');
         invoke('logout').catch((error) => {
             console.log('error', error);
         });
@@ -34,11 +27,11 @@
     fetch_logs();
 
     async function fetch_logs() {
-        const new_logs = await invoke('fetch_logs') as { type: string, message: string }[];
+        const new_logs = await invoke('fetch_logs') as Data.EventPayload[];
         if (new_logs.length > 0) {
             console.log('logs', new_logs);
             for (const log of new_logs) {
-                toast(log.message);
+                toast((log.payload as Data.LogPayload).message); 
             }
             logs.update((old_logs) => {
                 return [...old_logs, ...new_logs];
@@ -50,8 +43,34 @@
     const detach_log = attachConsole();
 	var ready = false;
 
+    if (!$readyCheck.events_registered) {
+        initialize_events();
+    }
+
 	onMount(() => {
 		ready = true;
+
+        if (browser) {
+            if (localStorage.theme === 'dark') {
+                theme.set('dark');
+                document.documentElement.classList.add('dark');
+            } else if (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                theme.set('dark');
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                theme.set('light');
+            }
+        }
+	});
+
+	theme.subscribe((value) => {
+        localStorage.setItem('theme', value);
+		if (value === 'dark') {
+			document.documentElement.classList.add('dark');
+		} else {
+			document.documentElement.classList.remove('dark');
+		}
 	});
 </script>
 

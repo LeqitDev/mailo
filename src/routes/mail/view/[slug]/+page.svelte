@@ -49,7 +49,7 @@
                     <p class="text-xs">Von: {email.sender}</p>
                 </div>
             </div>
-            <div class="flex gap-2 items-center">
+            <div class="flex gap-2 items-center text-sm">
                 <p>{date.toLocaleString()}</p>
             </div>
         </div>

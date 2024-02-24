@@ -7,7 +7,9 @@ export const emails: Writable<Data.Email[]> = writable([]);
 fetchEmails();
 
 export async function fetchEmails() {
-    invoke('get_emails').then((fetched_emails) => {
+    /* let window = null;
+    window = (await import('@tauri-apps/api/tauri')).default;
+    window?. */invoke('get_emails').then((fetched_emails) => {
         emails.set(fetched_emails as Data.Email[]);
         // console.log('fetched_emails', fetched_emails as Data.Email[]);
     }).catch((error) => {
