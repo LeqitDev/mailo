@@ -45,7 +45,7 @@
 	$: recentEmails = $emails.filter((email) => {
 		if (email.flags.seen) return false;
 		return true;
-	});
+	}).reverse();
 </script>
 
 <CustomLayout>
@@ -56,14 +56,15 @@
 		<div class="grid grid-cols-[minmax(40rem,_1fr)_auto] gap-8">
 			<div class="rounded-sm border px-4 pb-4 pt-1">
 				<p class="mb-2 text-lg font-semibold">New & recent emails</p>
-				{#each recentEmails as email, id (email.id)}
+				{#each recentEmails.slice(0, 3) as email, id (email.id)}
 					<EmailPreview {email} {id} />
 				{/each}
+				<Button variant="link" href="/mail/inbox">View all</Button>
 			</div>
 			<div class="rounded-sm border px-4 pb-4 pt-1">
 				<p class="mb-2 text-lg font-semibold">Manage your theme</p>
 				<RadioGroup.Root value={$theme} class="" onValueChange={onThemeSelected}>
-					<div class="flex space-x-2">
+					<div class="flex space-x-2 mb-2">
 						<RadioGroup.Item value="light" id="light" />
 						<Label for="light"
 							>Light
