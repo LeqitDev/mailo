@@ -8,6 +8,7 @@
 
 	export let email: Data.Email;
 	export var id: number;
+	export let variant: "default" | "compact" = "default";
 
 	var checked: boolean = false;
 	var redirect_btn: HTMLAnchorElement;
@@ -97,7 +98,7 @@
 			<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
 				{email.subject}
 			</h3>
-			<p class="line-clamp-2 overflow-ellipsis text-muted-foreground">
+			<p class="overflow-ellipsis text-muted-foreground" class:line-clamp-1={variant === "compact"} class:line-clamp-2={variant === "default"}>
 				{email.body.replaceAll(/\r?\n|\r|\n\r|<br>|<br\>/g, " ").replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
 			</p>
 		</div>

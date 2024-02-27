@@ -55,7 +55,7 @@
         </div>
         <div class="flex-1 overflow-y-auto">
             <div class="p-2">
-                {@html body}
+                {@html body.replaceAll("<a", "<a class='underline text-muted-foreground'")}
             </div>
         </div>
     </div>

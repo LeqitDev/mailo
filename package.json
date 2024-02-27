@@ -41,7 +41,7 @@
 	"type": "module",
 	"dependencies": {
 		"@tauri-apps/api": "^1.5.3",
-		"bits-ui": "^0.18.1",
+		"bits-ui": "^0.18.3",
 		"clsx": "^2.1.0",
 		"formsnap": "^0.4.4",
 		"lucide-svelte": "^0.331.0",
