@@ -1,4 +1,7 @@
-use std::{path::PathBuf, sync::{Arc, Mutex}};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
@@ -80,11 +83,25 @@ pub trait AccountAccessor {
 
 impl AccountAccessor for tauri::State<'_, AppState> {
     fn get_accounts(&self) -> Result<Vec<Account>, rusqlite::Error> {
-        self.inner().0.lock().unwrap().sql.as_ref().unwrap().get_accounts()
+        self.inner()
+            .0
+            .lock()
+            .unwrap()
+            .sql
+            .as_ref()
+            .unwrap()
+            .get_accounts()
     }
 
     fn get_account(&self, id: i64) -> Result<Account, rusqlite::Error> {
-        self.inner().0.lock().unwrap().sql.as_ref().unwrap().get_account(id)
+        self.inner()
+            .0
+            .lock()
+            .unwrap()
+            .sql
+            .as_ref()
+            .unwrap()
+            .get_account(id)
     }
 }
 
@@ -117,10 +134,9 @@ pub enum FrontendEvent {
     Action(ActionPayload),
 }
 
-trait EventPayload: Serialize + Clone {
-}
+trait EventPayload: Serialize + Clone {}
 
-#[derive(Clone, Serialize, Debug)]
+#[derive(Clone, Serialize, Debug, PartialEq)]
 pub struct ActionPayload {
     pub action: String,
     pub payload: String,

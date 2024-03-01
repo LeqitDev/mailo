@@ -61,6 +61,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                                     &mut session,
                                     account.clone(),
                                     email_id,
+                                    -1,
                                 )
                                 .await;
                                 app_state.action("fetch_emails", "");
@@ -87,7 +88,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                     app_state.log_error(e);
                 }
             }
-            app_state.lock().unwrap().backend_closed = true;
+            // app_state.lock().unwrap().backend_closed = true;
         }
         Err(e) => {
             app_state.log_error(e);
@@ -127,17 +128,28 @@ async fn initiliaze_imap(
         .get_email_count(account.id);
     match last_email {
         Ok(email) => {
+            let last_emails = (email as i32 - 100).max(1) as u32;
+            fetch_emails(
+                app_state,
+                &mut imap_session,
+                account.clone(),
+                last_emails,
+                -1,
+            )
+            .await;
+            app_state.action("fetch_emails", "");
             fetch_emails(
                 app_state,
                 &mut imap_session,
                 account,
-                (email as i32 - 100).max(1) as u32,
+                1,
+                last_emails as i32 - 1,
             )
             .await;
         }
         Err(e) => match e {
             rusqlite::Error::QueryReturnedNoRows => {
-                fetch_emails(app_state, &mut imap_session, account, 1).await;
+                fetch_emails(app_state, &mut imap_session, account, 1, -1).await;
                 app_state.log_info("No emails found in the database!");
             }
             _ => {
@@ -155,9 +167,21 @@ async fn fetch_emails(
     session: &mut Session<TlsStream<TcpStream>>,
     account: Account,
     from: u32,
+    to: i32,
 ) {
     let messages_stream = session
-        .fetch(format!("{}:*", from), "(BODY.PEEK[] FLAGS)")
+        .fetch(
+            format!(
+                "{}:{}",
+                from,
+                if to < 0 {
+                    "*".to_string()
+                } else {
+                    to.to_string()
+                }
+            ),
+            "(BODY.PEEK[] FLAGS)",
+        )
         .await
         .unwrap();
     let messages: Vec<_> = messages_stream.try_collect().await.unwrap();

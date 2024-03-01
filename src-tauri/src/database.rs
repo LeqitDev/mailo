@@ -1,6 +1,7 @@
-use std::{error::Error, fs, path::PathBuf};
+use std::{error::Error, fs, path::PathBuf, str::from_utf8};
 
 use async_imap::types::Flag;
+use base64::prelude::*;
 use rusqlite::{params, types::FromSql, Connection};
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +44,7 @@ pub fn get_database(mut path: PathBuf) -> Result<Connection, Box<dyn Error>> {
 pub trait AccountTable {
     fn get_accounts(&self) -> Result<Vec<Account>, rusqlite::Error>;
     fn get_account(&self, id: i64) -> Result<Account, rusqlite::Error>;
+    fn delete_account(&self, id: i64) -> Result<(), rusqlite::Error>;
 }
 
 impl AccountTable for Connection {
@@ -63,6 +65,11 @@ impl AccountTable for Connection {
             return Err(rusqlite::Error::QueryReturnedNoRows);
         }
         Ok(account[0].clone())
+    }
+
+    fn delete_account(&self, id: i64) -> Result<(), rusqlite::Error> {
+        self.execute("DELETE FROM accounts WHERE id = ?1", params![id])?;
+        Ok(())
     }
 }
 
@@ -98,7 +105,7 @@ impl Account {
     pub fn push(&self, conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute(
             "
-            INSERT INTO accounts (email, username, password, imap_server, imap_port)
+            INSERT OR REPLACE INTO accounts (email, username, password, imap_server, imap_port)
             VALUES (?1, ?2, ?3, ?4, ?5)
             ",
             params![
@@ -121,7 +128,14 @@ impl TryFrom<&rusqlite::Row<'_>> for Account {
             id: row.get(0)?,
             email: row.get(1)?,
             username: row.get(2)?,
-            password: row.get(3)?,
+            password: from_utf8(
+                BASE64_STANDARD
+                    .decode(row.get::<usize, String>(3)?.as_bytes())
+                    .unwrap_or_default()
+                    .as_slice(),
+            )
+            .unwrap_or("No password found!")
+            .to_string(),
             imap_server: row.get(4)?,
             imap_port: row.get(5)?,
         })

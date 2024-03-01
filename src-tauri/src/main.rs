@@ -1,33 +1,23 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_state;
 mod database;
 mod imap;
-mod app_state;
 
 use app_state::{AccountAccessor, AppState, FrontendEvent, LoggerPayload, Shareble};
+use base64::prelude::*;
 use database::{Account, AccountTable, Email, EmailTable};
 use imap::imap;
-use std::{str::from_utf8, 
-    sync::{Arc, Mutex}}
-;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
-use base64::prelude::*;
 
 #[tauri::command]
 fn get_accounts(state: tauri::State<AppState>) -> Result<Vec<database::Account>, String> {
     if let Ok(state) = state.0.lock() {
         if let Some(conn) = &state.sql {
             match conn.get_accounts() {
-                Ok(mut accounts) => {
-                    // exchange base64 encrypted password with decrypted password
-                    for account in accounts.iter_mut() {
-                        if !state.settings.master_password {
-                            account.password = from_utf8(BASE64_STANDARD.decode(account.password.as_bytes()).unwrap_or_default().as_slice()).unwrap_or("").to_string();
-                        }
-                    }
-                    Ok(accounts)
-                },
+                Ok(accounts) => Ok(accounts),
                 Err(e) => Err(e.to_string()),
             }
         } else {
@@ -56,11 +46,25 @@ fn add_account(
                 BASE64_STANDARD.encode(password)
             }
         };
+        println!("Added account: {}", password);
         if let Some(conn) = state.sql.as_ref() {
             println!("Added account: {:#?}", email);
             Account::new(-1, email, username, password, imap_host, imap_port)
                 .push(conn)
                 .map_err(|e| e.to_string())
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
+fn delete_account(state: tauri::State<AppState>, id: i64) -> Result<(), String> {
+    if let Ok(state) = state.0.lock() {
+        if let Some(conn) = state.sql.as_ref() {
+            conn.delete_account(id).map_err(|e| e.to_string())
         } else {
             Err("Failed to get database connection".to_string())
         }
@@ -154,10 +158,9 @@ fn fetch_logs(state: tauri::State<AppState>) -> Result<Vec<LoggerPayload>, Strin
                 _ => None,
             })
             .collect();
-        state.events.retain(|event| match event {
-            FrontendEvent::Log(_) => false,
-            _ => true,
-        });
+        state
+            .events
+            .retain(|event| !matches!(event, FrontendEvent::Log(_)));
         Ok(logs)
     } else {
         Err("Failed to lock state".to_string())
@@ -174,19 +177,25 @@ fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHand
                 if !app_state.frontend_ready {
                     continue;
                 }
-                let events = app_state.events.clone();
+                let mut events = app_state.events.clone();
                 app_state.events.clear();
-                drop(app_state);
+                // drop(app_state);
+                // remove duplicate action events
+                events.dedup_by(|a, b| {
+                    if let (FrontendEvent::Action(a), FrontendEvent::Action(b)) = (a, b) {
+                        a.action == b.action && a.payload == b.payload
+                    } else {
+                        false
+                    }
+                });
                 if !events.is_empty() {
                     println!("Sending events to frontend: {:#?}", events);
                     // weird thing the third event does not fire
                     for event in events {
                         match event {
-                            FrontendEvent::Log(log) => handle
-                                .get_window("main")
-                                .unwrap()
-                                .emit("log", log)
-                                .unwrap(),
+                            FrontendEvent::Log(log) => {
+                                handle.get_window("main").unwrap().emit("log", log).unwrap()
+                            }
                             FrontendEvent::Action(action) => handle
                                 .get_window("main")
                                 .unwrap()
@@ -240,7 +249,8 @@ fn main() {
             get_email,
             fetch_logs,
             get_settings,
-            add_event
+            add_event,
+            delete_account
         ])
         .setup(|app| {
             let handle = app.handle();
@@ -252,16 +262,24 @@ fn main() {
 
             frontend_event_dispatch_loop(app_state, handle);
 
-            for account in app
-                .state::<AppState>().get_accounts().unwrap()
-            {
+            let mut join_handles: Vec<tauri::async_runtime::JoinHandle<()>> = vec![];
+            for account in app.state::<AppState>().get_accounts().unwrap() {
                 let app_state: Arc<Mutex<Shareble>> =
                     Arc::clone(&app.state::<AppState>().inner().0);
 
-                tauri::async_runtime::spawn(async move {
+                let handle = tauri::async_runtime::spawn(async move {
                     imap(app_state, account).await;
                 });
+                join_handles.push(handle);
             }
+            let app_state: Arc<Mutex<Shareble>> = Arc::clone(&app.state::<AppState>().inner().0);
+            tauri::async_runtime::spawn(async move {
+                for handle in join_handles {
+                    handle.await.unwrap();
+                }
+                println!("All imap tasks finished");
+                app_state.lock().unwrap().backend_closed = true;
+            });
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -21,6 +21,7 @@
 	import CustomLayout from '$lib/custom/layouts/_customLayout.svelte';
 	import { fade, fly, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
+	import SideNavButton from '@/custom/components/SideNavButton.svelte';
 
 	export let data: LayoutData;
 
@@ -34,89 +35,26 @@
 	});
 </script>
 
-<CustomLayout>
+<CustomLayout site="mail">
 	<div slot="mail-sidebar">
-		{#if $expandedSidenav && ready}
-			<div class="grid gap-1 border-b" transition:slide>
-				<Button
-					variant={current_mailbox == 'inbox' ? 'secondary' : 'ghost'}
-					size="sm"
-					href="/mail/inbox"
-					class="justify-start gap-2"
-					on:click={() => {
-						if (current_mailbox !== 'inbox') selected_previews.update(() => []);
-						current_mailbox = 'inbox';
-					}}><InboxIcon class="h-4 w-4" /> Inbox</Button
-				>
-				<Button
-					variant={current_mailbox == 'sent' ? 'secondary' : 'ghost'}
-					size="sm"
-					href="/mail/sent"
-					class="justify-start gap-2"
-					on:click={() => {
-						if (current_mailbox !== 'sent') selected_previews.update(() => []);
-						current_mailbox = 'sent';
-					}}><SendIcon class="h-4 w-4" /> Sent</Button
-				>
-				<Button
-					variant={current_mailbox == 'drafts' ? 'secondary' : 'ghost'}
-					size="sm"
-					href="/mail/drafts"
-					class="justify-start gap-2"
-					on:click={() => {
-						if (current_mailbox !== 'drafts') selected_previews.update(() => []);
-						current_mailbox = 'drafts';
-					}}><FileIcon class="h-4 w-4" /> Drafts</Button
-				>
-				<Button
-					variant={current_mailbox == 'trash' ? 'secondary' : 'ghost'}
-					size="sm"
-					href="/mail/trash"
-					class="justify-start gap-2"
-					on:click={() => {
-						if (current_mailbox !== 'trash') selected_previews.update(() => []);
-						current_mailbox = 'trash';
-					}}><Trash2Icon class="h-4 w-4" /> Trash</Button
-				>
-			</div>
-		{:else if ready}
-			<div class="grid gap-1 border-b" transition:slide>
-				<Button
-					variant={current_mailbox == 'inbox' ? 'secondary' : 'ghost'}
-					size="icon"
-					href="/mail/inbox"
-					on:click={() => {
-						if (current_mailbox !== 'inbox') selected_previews.update(() => []);
-						current_mailbox = 'inbox';
-					}}><InboxIcon class="h-4 w-4" /></Button
-				>
-				<Button
-					variant={current_mailbox == 'sent' ? 'secondary' : 'ghost'}
-					size="icon"
-					href="/mail/sent"
-					on:click={() => {
-						if (current_mailbox !== 'sent') selected_previews.update(() => []);
-						current_mailbox = 'sent';
-					}}><SendIcon class="h-4 w-4" /></Button
-				>
-				<Button
-					variant={current_mailbox == 'drafts' ? 'secondary' : 'ghost'}
-					size="icon"
-					href="/mail/drafts"
-					on:click={() => {
-						if (current_mailbox !== 'drafts') selected_previews.update(() => []);
-						current_mailbox = 'drafts';
-					}}><FileIcon class="h-4 w-4" /></Button
-				>
-				<Button
-					variant={current_mailbox == 'trash' ? 'secondary' : 'ghost'}
-					size="icon"
-					href="/mail/trash"
-					on:click={() => {
-						if (current_mailbox !== 'trash') selected_previews.update(() => []);
-						current_mailbox = 'trash';
-					}}><Trash2Icon class="h-4 w-4" /></Button
-				>
+		{#if ready}
+			<div class="grid gap-1 border-b pb-2" transition:slide>
+				<SideNavButton site={current_mailbox} name="Inbox" site_name="inbox" size="sm" href="/mail/inbox" active_variant="secondary" clicked={() => {
+					if (current_mailbox !== 'inbox') selected_previews.update(() => []);
+					current_mailbox = 'inbox';
+				}}><InboxIcon class="h-4 w-4" /></SideNavButton>
+				<SideNavButton site={current_mailbox} name="Sent" site_name="sent" size="sm" href="/mail/sent" active_variant="secondary" clicked={() => {
+					if (current_mailbox !== 'sent') selected_previews.update(() => []);
+					current_mailbox = 'sent';
+				}}><SendIcon class="h-4 w-4" /></SideNavButton>
+				<SideNavButton site={current_mailbox} name="Drafts" site_name="drafts" size="sm" href="/mail/drafts" active_variant="secondary" clicked={() => {
+					if (current_mailbox !== 'drafts') selected_previews.update(() => []);
+					current_mailbox = 'drafts';
+				}}><FileIcon class="h-4 w-4" /></SideNavButton>
+				<SideNavButton site={current_mailbox} name="Trash" site_name="trash" size="sm" href="/mail/trash" active_variant="secondary" clicked={() => {
+					if (current_mailbox !== 'trash') selected_previews.update(() => []);
+					current_mailbox = 'trash';
+				}}><Trash2Icon class="h-4 w-4" /></SideNavButton>
 			</div>
 		{/if}
 	</div>

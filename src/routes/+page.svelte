@@ -79,7 +79,7 @@
 		.reverse();
 </script>
 
-<CustomLayout>
+<CustomLayout site="home">
 	<!-- darkmode toggle -->
 	<div class="overflow-y-auto p-2 flex-shrink">
 		<!-- Dashboard welcome phrase -->
@@ -98,7 +98,7 @@
 						<p class="text-xl font-semibold">Manage your accounts</p>
 						<Button variant="ghost" size="icon" href="/mail/accounts/add"><PlusIcon /></Button>
 					</div>
-					<div class="grid grid-cols-1 max-w-sm">
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 lg:max-w-sm gap-2">
 						{#each $accounts as account}
 							<div class="flex items-center gap-2">
 								<Avatar.Root>
@@ -112,9 +112,9 @@
 									<div class="flex justify-between w-full">
 										<div>
 											<p class="font-semibold">{getPotentialName(account.email)}</p>
-											<p class="text-muted-foreground">{account.email}</p>
+											<p class="text-muted-foreground overflow-ellipsis">{account.email}</p>
 										</div>
-										<Button variant="ghost" size="icon"><UserCogIcon /></Button>
+										<Button variant="ghost" size="icon" href="/settings/accounts/{account.id}"><UserCogIcon /></Button>
 									</div>
 								</div>
 							</div>
