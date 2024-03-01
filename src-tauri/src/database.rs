@@ -176,7 +176,7 @@ impl EmailTable for Connection {
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct EmailFlags {
-    seen: bool,
+    pub seen: bool,
     answered: bool,
     flagged: bool,
     deleted: bool,
@@ -239,7 +239,7 @@ impl Email {
     pub fn push(&self, conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute(
             "
-            INSERT OR IGNORE INTO emails (email_id, account_id, subject, sender, date, body, flags)
+            INSERT OR REPLACE INTO emails (email_id, account_id, subject, sender, date, body, flags)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
             ",
             params![

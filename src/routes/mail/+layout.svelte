@@ -121,7 +121,7 @@
 		{/if}
 	</div>
 	<div class="flex min-h-screen w-full flex-col">
-		<div class="select-none border-b px-2 pb-1 pt-2">
+		<div class="select-none px-2 pb-1 pt-2">
 			<div class="flex justify-between">
 				<Select.Root selected={{value: "default", label: $accounts.length > 0 ? "All" : "No accounts"}} onSelectedChange={(selectedValue) => selected_account.set($accounts.find((value) => value.id === selectedValue?.value) ?? null)}>
 					<Select.Trigger class="max-w-sm" value="default">

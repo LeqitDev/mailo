@@ -31,7 +31,9 @@
         if (new_logs.length > 0) {
             console.log('logs', new_logs);
             for (const log of new_logs) {
-                toast((log.payload as Data.LogPayload).message); 
+                if (log && log.payload && log.payload.hasOwnProperty('message')) {
+                    toast((log.payload as Data.LogPayload).message); 
+                }
             }
             logs.update((old_logs) => {
                 return [...old_logs, ...new_logs];
@@ -51,6 +53,7 @@
 		ready = true;
 
         if (browser) {
+            console.log('storedTheme', localStorage.theme);
             if (localStorage.theme === 'dark') {
                 theme.set('dark');
                 document.documentElement.classList.add('dark');
@@ -62,15 +65,24 @@
                 theme.set('light');
             }
         }
-	});
 
-	theme.subscribe((value) => {
-        localStorage.setItem('theme', value);
-		if (value === 'dark') {
-			document.documentElement.classList.add('dark');
-		} else {
-			document.documentElement.classList.remove('dark');
-		}
+        theme.subscribe((value) => {
+            console.log('theme', value);
+            localStorage.setItem('theme', value);
+            console.log('storedTheme', localStorage.theme);
+            if (value !== 'dark')  {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        theme.subscribe((value) => {
+            localStorage.setItem('theme', value);
+            if (value === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
 	});
 </script>
 
@@ -78,7 +90,7 @@
 
 <main class="w-full h-full flex">
     {#if $expandedSidenav}
-        <div class="h-full border-r p-1 pt-2 flex flex-col gap-2 w-60">
+        <div class="h-full border-r p-1 pt-2 flex flex-col gap-2 min-w-60">
             <Button variant={!($page.url.pathname.includes("mail")) ? "default" : "ghost"} href="/" class="justify-start gap-2"><HomeIcon /> Home</Button>
             <Button variant={$page.url.pathname.includes("mail") ? "default" : "ghost"} href="/mail/inbox" class="justify-start gap-2"><MailIcon /> E-Mail</Button>
             <div class="pl-6">
