@@ -13,14 +13,12 @@
 	import { accounts } from '@/stores/accounts';
 	import * as Avatar from '@/components/ui/avatar';
 	import { cn } from '@/utils';
+	import type { PageData } from './$types';
+	import AddAccountDialog from '@/custom/components/AddAccountDialog.svelte';
+	import EditAccountDialog from '@/custom/components/EditAccountDialog.svelte';
 
-	function onColorSwitchBtnClicked() {
-		if ($theme === 'light') {
-			theme.set('dark');
-		} else {
-			theme.set('light');
-		}
-	}
+	export let data: PageData;
+	console.log('data', data);
 
 	function onThemeSelected(new_theme: string) {
 		theme.set(new_theme);
@@ -67,10 +65,6 @@
 			.join('');
 	}
 
-	function getPotentialName(email: string) {
-		return email.split('@')[0].split('.').map((part) => part[0].toUpperCase() + part.slice(1)).join(' ');
-	}
-
 	$: recentEmails = $emails
 		.filter((email) => {
 			if (email.flags.seen) return false;
@@ -96,7 +90,9 @@
 				<div class="px-4 pb-4 pt-1">
 					<div class="mb-2 flex justify-between items-center">
 						<p class="text-xl font-semibold">Manage your accounts</p>
-						<Button variant="ghost" size="icon" href="/mail/accounts/add"><PlusIcon /></Button>
+						<AddAccountDialog data={data.add_account_form}>
+							<Button variant="ghost" size="icon"><PlusIcon /></Button>
+						</AddAccountDialog>
 					</div>
 					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 lg:max-w-sm gap-2">
 						{#each $accounts as account}
@@ -111,10 +107,12 @@
 								<div class="w-full">
 									<div class="flex justify-between w-full">
 										<div>
-											<p class="font-semibold">{getPotentialName(account.email)}</p>
+											<p class="font-semibold">{account.display_name}</p>
 											<p class="text-muted-foreground overflow-ellipsis">{account.email}</p>
 										</div>
-										<Button variant="ghost" size="icon" href="/settings/accounts/{account.id}"><UserCogIcon /></Button>
+										<EditAccountDialog form_data={data.account_settings_form} {account} >
+											<Button variant="ghost" size="icon"><UserCogIcon /></Button>
+										</EditAccountDialog>
 									</div>
 								</div>
 							</div>
@@ -218,14 +216,6 @@
 				</div>
 			</div>
 		</div>
-		<!-- {#if $logs}
-		<div class="p-2">
-			{#each $logs as log}
-				<div class="rounded-lg bg-gray-200 p-2 dark:bg-gray-800">
-					<p>{getLogParsed(log)}</p>
-				</div>
-			{/each}
-		</div>
-	{/if} -->
-	</div></CustomLayout
+	</div>
+</CustomLayout
 >

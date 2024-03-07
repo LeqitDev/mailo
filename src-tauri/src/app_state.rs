@@ -7,7 +7,10 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use tauri::api::path::app_data_dir;
 
-use crate::database::{get_database, Account, AccountTable};
+use crate::{
+    database::{get_database, Account, AccountTable},
+    settings::{Settings, SettingsTrait, SettingsWrapper},
+};
 
 pub struct AppState(pub Arc<Mutex<Shareble>>);
 
@@ -18,15 +21,14 @@ pub struct Shareble {
     pub frontend_ready: bool,
     pub events: Vec<FrontendEvent>,
     pub backend_closed: bool,
-    pub settings: Settings,
-    settings_path: PathBuf,
+    pub settings_wrapper: SettingsWrapper,
 }
 
 impl Shareble {
-    pub fn new(path: PathBuf) -> Self {
-        let mut settings_path = path.clone();
-        settings_path.push("settings.toml");
-        let settings: Settings = confy::load_path(settings_path.clone()).unwrap();
+    pub fn new(mut path: PathBuf) -> Self {
+        path.push("settings.json");
+        let settings: SettingsWrapper = SettingsWrapper::load(path.clone());
+        path.pop();
         match get_database(path) {
             Ok(conn) => Self {
                 sql: Some(conn),
@@ -34,8 +36,7 @@ impl Shareble {
                 frontend_ready: false,
                 events: Vec::new(),
                 backend_closed: false,
-                settings,
-                settings_path,
+                settings_wrapper: settings,
             },
             Err(e) => {
                 println!("Failed to get database connection: {:#?}", e);
@@ -45,15 +46,14 @@ impl Shareble {
                     frontend_ready: false,
                     events: Vec::new(),
                     backend_closed: false,
-                    settings,
-                    settings_path,
+                    settings_wrapper: settings,
                 }
             }
         }
     }
 
     pub fn save(&self) {
-        confy::store_path(self.settings_path.clone(), self.settings.clone()).unwrap();
+        self.settings_wrapper.save();
     }
 
     fn push_log<T: ToString>(&mut self, message: T, log_type: LoggerType) {
@@ -69,11 +69,6 @@ impl Shareble {
             payload: payload.to_string(),
         }));
     }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, Default)]
-pub struct Settings {
-    pub master_password: bool,
 }
 
 pub trait AccountAccessor {

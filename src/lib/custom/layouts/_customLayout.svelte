@@ -54,10 +54,6 @@
 	const detach_log = attachConsole();
 	var ready = false;
 
-	if (!$readyCheck.events_registered) {
-		initialize_events();
-	}
-
 	onMount(() => {
 		ready = true;
 
@@ -95,6 +91,10 @@
 				document.documentElement.classList.remove('dark');
 			}
 		});
+
+		if (!$readyCheck.events_registered) {
+			initialize_events();
+		}
 	});
 </script>
 

@@ -100,12 +100,10 @@ async fn initiliaze_imap(
     app_state: &mut Arc<Mutex<Shareble>>,
     account: Account,
 ) -> Result<Session<TlsStream<TcpStream>>, Box<dyn Error + Send + Sync>> {
-    let imap_addr = (account.imap_server.as_str(), account.imap_port as u16);
+    let imap_addr = (account.imap_host.as_str(), account.imap_port as u16);
     let tcp_stream = TcpStream::connect(imap_addr).await?;
     let tls = async_native_tls::TlsConnector::new();
-    let tls_stream = tls
-        .connect(account.imap_server.as_str(), tcp_stream)
-        .await?;
+    let tls_stream = tls.connect(account.imap_host.as_str(), tcp_stream).await?;
 
     let client = async_imap::Client::new(tls_stream);
     app_state.log_info(format!("-- connected to {}:{}", imap_addr.0, imap_addr.1));

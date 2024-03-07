@@ -1,7 +1,7 @@
 use std::{error::Error, fs, path::PathBuf, str::from_utf8};
 
 use async_imap::types::Flag;
-use base64::prelude::*;
+use base64::{display, prelude::*};
 use rusqlite::{params, types::FromSql, Connection};
 use serde::{Deserialize, Serialize};
 
@@ -17,7 +17,8 @@ pub fn get_database(mut path: PathBuf) -> Result<Connection, Box<dyn Error>> {
             username TEXT NOT NULL,
             password TEXT NOT NULL,
             imap_server TEXT NOT NULL,
-            imap_port INTEGER NOT NULL
+            imap_port INTEGER NOT NULL,
+            display_name TEXT
         )
         ",
         (),
@@ -79,8 +80,9 @@ pub struct Account {
     pub email: String,
     pub username: String,
     pub password: String,
-    pub imap_server: String,
+    pub imap_host: String,
     pub imap_port: i64,
+    pub display_name: Option<String>,
 }
 
 impl Account {
@@ -91,29 +93,51 @@ impl Account {
         password: String,
         imap_server: String,
         imap_port: i64,
+        display_name: Option<String>,
     ) -> Self {
         Self {
             id,
             email,
             username,
             password,
-            imap_server,
+            imap_host: imap_server,
             imap_port,
+            display_name,
         }
     }
 
     pub fn push(&self, conn: &Connection) -> Result<(), rusqlite::Error> {
         conn.execute(
             "
-            INSERT OR REPLACE INTO accounts (email, username, password, imap_server, imap_port)
+            INSERT OR IGNORE INTO accounts (email, username, password, imap_server, imap_port)
             VALUES (?1, ?2, ?3, ?4, ?5)
             ",
             params![
                 &self.email,
                 &self.username,
                 &self.password,
-                &self.imap_server,
+                &self.imap_host,
                 &self.imap_port,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn update(&self, conn: &Connection) -> Result<(), rusqlite::Error> {
+        conn.execute(
+            "
+            UPDATE accounts
+            SET email = ?1, username = ?2, password = ?3, imap_server = ?4, imap_port = ?5, display_name = ?6
+            WHERE id = ?7
+            ",
+            params![
+                &self.email,
+                &self.username,
+                &self.password,
+                &self.imap_host,
+                &self.imap_port,
+                &self.display_name,
+                &self.id,
             ],
         )?;
         Ok(())
@@ -136,8 +160,9 @@ impl TryFrom<&rusqlite::Row<'_>> for Account {
             )
             .unwrap_or("No password found!")
             .to_string(),
-            imap_server: row.get(4)?,
+            imap_host: row.get(4)?,
             imap_port: row.get(5)?,
+            display_name: row.get(6)?,
         })
     }
 }

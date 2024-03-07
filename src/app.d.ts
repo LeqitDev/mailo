@@ -15,8 +15,9 @@ declare global {
 			username: string;
 			email: string;
 			password: string;
-			imapHost: string;
-			imapPort: string;
+			imap_host: string;
+			imap_port: number;
+			display_name: string;
 		}
 
 		interface Email {
@@ -53,7 +54,7 @@ declare global {
 
 		interface ActionPayload {
 			action: string;
-			payload: any;
+			payload: string;
 		}
 	}
 }

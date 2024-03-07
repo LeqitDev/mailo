@@ -22,13 +22,12 @@
 	import { fade, fly, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import SideNavButton from '@/custom/components/SideNavButton.svelte';
+	import AddAccountDialog from '@/custom/components/AddAccountDialog.svelte';
 
 	export let data: LayoutData;
 
 	var current_mailbox = 'inbox';
 	var ready = false;
-
-	var openAddAccountDialog = false;
 
 	onMount(() => {
 		ready = true;
@@ -85,23 +84,9 @@
 				</form>
 				<div>
 					<Button variant="outline" size="sm" on:click={() => fetchAccounts()}>Settings</Button>
-					<Dialog.Root bind:open={openAddAccountDialog}>
-						<Dialog.Trigger class={buttonVariants({ variant: 'outline', size: 'sm' })}
-							>Add Account</Dialog.Trigger
-						>
-						<Dialog.Content class="sm:max-w-[425px]">
-							<Dialog.Header>
-								<Dialog.Title>Add Account</Dialog.Title>
-								<Dialog.Description>
-									Add a new account with imap to your mail client.
-								</Dialog.Description>
-							</Dialog.Header>
-							<MailAccountForm form={data.form} onSuccessfulSubmit={() => {openAddAccountDialog = false}} />
-							<Dialog.Footer>
-								<Button type="submit" form="mail-account-form">Save account</Button>
-							</Dialog.Footer>
-						</Dialog.Content>
-					</Dialog.Root>
+					<AddAccountDialog data={data}>
+						<Button variant="outline" size="sm">Add Account</Button>
+					</AddAccountDialog>
 					<Button
 						variant="outline"
 						size="sm"

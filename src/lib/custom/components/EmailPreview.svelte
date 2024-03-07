@@ -5,6 +5,7 @@
 	import { formatTimestamp } from "@/utils";
 	import { search_string } from "@/stores/settings";
 	import { onMount } from "svelte";
+	import * as ContextMenu from "@/components/ui/context-menu";
 
 	export let email: Data.Email;
 	export var id: number;
@@ -77,8 +78,9 @@
 	}
 </script>
 {#if email}
-	<a class="hidden" href="/mail/view/{email.id}" bind:this={redirect_btn}>Redirect</a>
-	<button
+	<ContextMenu.Root>
+		<ContextMenu.Trigger>
+			<button
 		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none"
 		class:bg-border={checked}
 		class:hover:bg-muted={!checked}
@@ -106,4 +108,12 @@
 			<p class="w-max text-muted-foreground">{formatTimestamp(date)}</p>
 		</div>
 	</button>
+		</ContextMenu.Trigger>
+		<ContextMenu.Content>
+			<ContextMenu.Item>
+				Mark as read
+			</ContextMenu.Item>
+		</ContextMenu.Content>
+	</ContextMenu.Root>
+	<a class="hidden" href="/mail/view/{email.id}" bind:this={redirect_btn}>Redirect</a>
 {/if}

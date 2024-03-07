@@ -4,6 +4,7 @@
 mod app_state;
 mod database;
 mod imap;
+mod settings;
 
 use app_state::{AccountAccessor, AppState, FrontendEvent, LoggerPayload, Shareble};
 use base64::prelude::*;
@@ -11,6 +12,22 @@ use database::{Account, AccountTable, Email, EmailTable};
 use imap::imap;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
+
+#[tauri::command]
+fn get_account(state: tauri::State<AppState>, id: i64) -> Result<Account, String> {
+    if let Ok(state) = state.0.lock() {
+        if let Some(conn) = &state.sql {
+            match conn.get_account(id) {
+                Ok(account) => Ok(account),
+                Err(e) => Err(e.to_string()),
+            }
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
 
 #[tauri::command]
 fn get_accounts(state: tauri::State<AppState>) -> Result<Vec<database::Account>, String> {
@@ -40,7 +57,7 @@ fn add_account(
     println!("Adding account: {:#?}", email);
     if let Ok(state) = state.0.lock() {
         let password = {
-            if state.settings.master_password {
+            if state.settings_wrapper.settings.master_password {
                 password
             } else {
                 BASE64_STANDARD.encode(password)
@@ -49,9 +66,28 @@ fn add_account(
         println!("Added account: {}", password);
         if let Some(conn) = state.sql.as_ref() {
             println!("Added account: {:#?}", email);
-            Account::new(-1, email, username, password, imap_host, imap_port)
+            Account::new(-1, email, username, password, imap_host, imap_port, None)
                 .push(conn)
                 .map_err(|e| e.to_string())
+        } else {
+            Err("Failed to get database connection".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
+fn update_account(state: tauri::State<AppState>, mut account: Account) -> Result<(), String> {
+    if let Ok(state) = state.0.lock() {
+        // let password = {
+        if state.settings_wrapper.settings.master_password {
+        } else {
+            account.password = BASE64_STANDARD.encode(account.password)
+        }
+        // };
+        if let Some(conn) = state.sql.as_ref() {
+            account.update(conn).map_err(|e| e.to_string())
         } else {
             Err("Failed to get database connection".to_string())
         }
@@ -211,9 +247,9 @@ fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHand
 }
 
 #[tauri::command]
-fn get_settings(state: tauri::State<AppState>) -> Result<app_state::Settings, String> {
+fn get_settings(state: tauri::State<AppState>) -> Result<settings::Settings, String> {
     if let Ok(state) = state.0.lock() {
-        Ok(state.settings.clone())
+        Ok(state.settings_wrapper.settings.clone())
     } else {
         Err("Failed to lock state".to_string())
     }
@@ -240,6 +276,7 @@ fn add_event(state: tauri::State<AppState>, event_type: String, payload: String)
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
+            get_account,
             get_accounts,
             add_account,
             logout,
@@ -250,7 +287,8 @@ fn main() {
             fetch_logs,
             get_settings,
             add_event,
-            delete_account
+            delete_account,
+            update_account
         ])
         .setup(|app| {
             let handle = app.handle();
