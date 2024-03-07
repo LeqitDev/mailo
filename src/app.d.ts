@@ -42,9 +42,18 @@ declare global {
 			custom: string[];
 		}
 
-		interface EventPayload {
+		interface Settings {
+			theme: 'light' | 'dark';
+			lazyloadingenabled: boolean;
+			masterpassword: boolean;
+			dashboardEmailFilter: "unseen" | "recent" | "favorite" | "accountSpecific";
+			dashboardEmailFilterAccountId?: string;
+		}
+
+		interface CustomEvent {
 			event: string;
-			payload: LogPayload | ActionPayload;
+			payload: LogPayload | ActionPayload | NotifyPayload;
+			time?: string;
 		}
 
 		interface LogPayload {
@@ -55,6 +64,11 @@ declare global {
 		interface ActionPayload {
 			action: string;
 			payload: string;
+		}
+
+		interface NotifyPayload {
+			title: string;
+			body: string;
 		}
 	}
 }

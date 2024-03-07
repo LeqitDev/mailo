@@ -1,11 +1,11 @@
 <script lang="ts">
 	import EmailPreview from "@/custom/components/EmailPreview.svelte";
 	import { Button } from "@/components/ui/button";
-	import { emails, fetchEmails, selected_previews } from "@/stores/emails";
-	import type { ActionData, PageData } from './$types';
+	import { emailSortDateFunction, emails, fetchEmails, selected_previews } from "@/stores/emails";
+	import type { PageData } from './$types';
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
-	import { lazyloadingenabled, searchEmail, search_string } from "@/stores/settings";
+	import { settings, searchEmail, search_string } from "@/stores/settings";
 	import { selected_account } from "@/stores/accounts";
 
     export let data: PageData;
@@ -15,12 +15,12 @@
 
 	onMount(() => {
 		ready = true;
-        if (!$lazyloadingenabled) {
+        if (!$settings.lazyloadingenabled) {
             visible_emails = 99999;
         }
 	});
 
-    $: filteredEmails = $emails.filter(email => {
+    $: filteredEmails = $emails.sort(emailSortDateFunction).filter(email => {
         if (!searchEmail(email, $search_string)) return false;
         if ($selected_account && email.account_id !== $selected_account.id) return false;
         switch (data.slug) {
@@ -33,7 +33,7 @@
             default:
                 return false;
         }
-    }).reverse();
+    });
 
     function onScroll(e: Event) {
         const target = e.target as HTMLDivElement;

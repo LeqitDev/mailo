@@ -69,6 +69,13 @@ impl Shareble {
             payload: payload.to_string(),
         }));
     }
+
+    fn push_notify<T: ToString>(&mut self, title: T, body: T) {
+        self.events.push(FrontendEvent::Notify(NotifyPayload {
+            title: title.to_string(),
+            body: body.to_string(),
+        }));
+    }
 }
 
 pub trait AccountAccessor {
@@ -112,6 +119,7 @@ pub trait EventDispatcher {
         self.log(message, LoggerType::Info);
     }
     fn action<T: ToString>(&mut self, action: T, payload: T);
+    fn notify<T: ToString>(&mut self, title: T, body: T);
 }
 
 impl EventDispatcher for Arc<Mutex<Shareble>> {
@@ -121,12 +129,16 @@ impl EventDispatcher for Arc<Mutex<Shareble>> {
     fn action<T: ToString>(&mut self, action: T, payload: T) {
         self.lock().unwrap().push_action(action, payload);
     }
+    fn notify<T: ToString>(&mut self, title: T, body: T) {
+        self.lock().unwrap().push_notify(title, body);
+    }
 }
 
 #[derive(Clone, Debug)]
 pub enum FrontendEvent {
     Log(LoggerPayload),
     Action(ActionPayload),
+    Notify(NotifyPayload),
 }
 
 trait EventPayload: Serialize + Clone {}
@@ -148,4 +160,10 @@ pub enum LoggerType {
 pub struct LoggerPayload {
     pub message: String,
     pub log_type: LoggerType,
+}
+
+#[derive(Clone, Serialize, Debug)]
+pub struct NotifyPayload {
+    pub title: String,
+    pub body: String,
 }

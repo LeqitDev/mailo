@@ -37,7 +37,7 @@
 <CustomLayout site="mail">
 	<div slot="mail-sidebar">
 		{#if ready}
-			<div class="grid gap-1 border-b pb-2" transition:slide>
+			<div class="grid gap-1 border-b pb-2" class:pl-6={$expandedSidenav} transition:slide>
 				<SideNavButton site={current_mailbox} name="Inbox" site_name="inbox" size="sm" href="/mail/inbox" active_variant="secondary" clicked={() => {
 					if (current_mailbox !== 'inbox') selected_previews.update(() => []);
 					current_mailbox = 'inbox';

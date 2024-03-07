@@ -2,12 +2,12 @@
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { MoonIcon, SunIcon, ArrowBigDownIcon, HomeIcon, MailIcon, PlusIcon, Settings2Icon, MoreVerticalIcon, UserCogIcon } from 'lucide-svelte';
 	import CustomLayout from '../lib/custom/layouts/_customLayout.svelte';
-	import { logs, readyCheck, theme } from '@/stores/settings';
+	import { readyCheck, settings } from '@/stores/settings';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { onMount } from 'svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { Label } from '@/components/ui/label';
-	import { emails } from '@/stores/emails';
+	import { emailSortDateFunction, emails } from '@/stores/emails';
 	import EmailPreview from '@/custom/components/EmailPreview.svelte';
 	import { split } from 'postcss/lib/list';
 	import { accounts } from '@/stores/accounts';
@@ -21,7 +21,11 @@
 	console.log('data', data);
 
 	function onThemeSelected(new_theme: string) {
-		theme.set(new_theme);
+		if (new_theme !== 'light' && new_theme !== 'dark') return;
+		settings.update((settings) => {
+			settings.theme = new_theme;
+			return settings;
+		});
 	}
 
 	onMount(() => {
@@ -53,7 +57,7 @@
 		return hash;
 	}
 
-	function getLogParsed(log: Data.EventPayload) {
+	function getLogParsed(log: Data.CustomEvent) {
 		return `${(log.payload as Data.LogPayload).log_type}: ${(log.payload as Data.LogPayload).message}`;
 	}
 
@@ -66,11 +70,11 @@
 	}
 
 	$: recentEmails = $emails
+		.sort(emailSortDateFunction)
 		.filter((email) => {
 			if (email.flags.seen) return false;
 			return true;
-		})
-		.reverse();
+		});
 </script>
 
 <CustomLayout site="home">
@@ -80,7 +84,10 @@
 		<h1 class="mb-4 text-3xl font-bold ml-4 mt-4">Welcome to your Dashboard.</h1>
 		<div class="lg:flex w-full items-start gap-4">
 			<div class="transparent flex-grow rounded-sm px-4 pb-4 pt-1">
-				<p class="mb-2 text-xl font-semibold">New & recent emails</p>
+				<div class="flex justify-between items-center">
+					<p class="mb-2 text-xl font-semibold">New & recent emails</p>
+					<p class="text-sm text-muted-foreground">{recentEmails.length - 14} more unseen emails hidden</p>
+				</div>
 				{#each recentEmails.slice(0, 14) as email, id (email.id)}
 					<EmailPreview {email} {id} variant="compact" />
 				{/each}
@@ -121,7 +128,7 @@
 				</div>
 				<div class="mt-4 rounded-sm px-4 pb-4 pt-1">
 					<p class="mb-2 text-xl font-semibold">Change your theme</p>
-					<RadioGroup.Root value={$theme} class="" onValueChange={onThemeSelected}>
+					<RadioGroup.Root value={$settings.theme} class="" onValueChange={onThemeSelected}>
 						<div class="flex space-x-2">
 							<RadioGroup.Item value="light" id="light" />
 							<Label for="light" class="cursor-pointer"
@@ -147,7 +154,7 @@
 													buttonVariants({
 														variant: 'ghost',
 														size: 'icon',
-														className: 'hover:bg-[hsl(0_0%_96.1%)] dark:text-background'
+														className: 'hover:bg-[hsl(0_0%_90.1%)] dark:text-background'
 													})
 												)}
 											>

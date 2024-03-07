@@ -184,8 +184,8 @@ impl EmailTable for Connection {
     }
 
     fn get_last_hundred_emails(&self, account_id: i64) -> Result<Vec<Email>, rusqlite::Error> {
-        let mut stmt =
-            self.prepare("SELECT * FROM emails WHERE account_id = ?1 ORDER BY id DESC LIMIT 100")?;
+        let mut stmt = self
+            .prepare("SELECT * FROM emails WHERE account_id = ?1 ORDER BY date DESC LIMIT 100")?;
         let emails = stmt
             .query_map(params![account_id], |row| Ok(Email::try_from(row).unwrap()))?
             .collect::<Result<Vec<Email>, _>>()?;

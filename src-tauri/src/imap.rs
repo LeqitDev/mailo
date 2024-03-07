@@ -8,6 +8,7 @@ use async_imap::Session;
 use async_native_tls::TlsStream;
 use futures::TryStreamExt;
 use mail_parser::MessageParser;
+use notify_rust::{Hint, Timeout};
 use tokio::net::TcpStream;
 
 use crate::{
@@ -56,6 +57,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                             println!("New data: {} {}", msg, email_id);
                             if splitted_msg.get(2).unwrap().contains("EXISTS") {
                                 let mut session = idle.done().await.unwrap();
+                                let mut notification_body = String::new();
                                 fetch_emails(
                                     &mut app_state,
                                     &mut session,
@@ -63,7 +65,22 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                                     email_id,
                                     -1,
                                 )
-                                .await;
+                                .await
+                                .iter()
+                                .for_each(|email| {
+                                    notification_body.push_str(&email.subject);
+                                    notification_body.push('\n');
+                                    email
+                                        .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+                                        .unwrap();
+                                });
+                                /* notify_rust::Notification::new()
+                                .summary("New email(s)")
+                                .body(&notification_body)
+                                .timeout(Timeout::Never)
+                                .show()
+                                .unwrap(); */
+                                app_state.notify("New email(s)", &notification_body);
                                 app_state.action("fetch_emails", "");
                                 idle = session.idle();
                                 idle.init().await.unwrap();
@@ -134,7 +151,13 @@ async fn initiliaze_imap(
                 last_emails,
                 -1,
             )
-            .await;
+            .await
+            .iter()
+            .for_each(|email| {
+                email
+                    .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+                    .unwrap();
+            });
             app_state.action("fetch_emails", "");
             fetch_emails(
                 app_state,
@@ -143,11 +166,24 @@ async fn initiliaze_imap(
                 1,
                 last_emails as i32 - 1,
             )
-            .await;
+            .await
+            .iter()
+            .for_each(|email| {
+                email
+                    .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+                    .unwrap()
+            });
         }
         Err(e) => match e {
             rusqlite::Error::QueryReturnedNoRows => {
-                fetch_emails(app_state, &mut imap_session, account, 1, -1).await;
+                fetch_emails(app_state, &mut imap_session, account, 1, -1)
+                    .await
+                    .iter()
+                    .for_each(|email| {
+                        email
+                            .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+                            .unwrap();
+                    });
                 app_state.log_info("No emails found in the database!");
             }
             _ => {
@@ -166,7 +202,8 @@ async fn fetch_emails(
     account: Account,
     from: u32,
     to: i32,
-) {
+) -> Vec<Email> {
+    let mut emails = vec![];
     let messages_stream = session
         .fetch(
             format!(
@@ -186,7 +223,7 @@ async fn fetch_emails(
     app_state.log_info(format!("Fetched {} new emails!", messages.len()));
     for raw_message in messages {
         let flags: Vec<_> = raw_message.flags().collect();
-
+        let uid = raw_message.uid;
         if let Some(body) = raw_message.body() {
             let message = MessageParser::default()
                 .parse(std::str::from_utf8(body).unwrap())
@@ -194,9 +231,14 @@ async fn fetch_emails(
             let mut new_email = Email::from(message);
             new_email.set_flags(flags);
             new_email.account_id = account.id;
-            new_email
-                .push(app_state.lock().unwrap().sql.as_ref().unwrap())
-                .unwrap();
+            if let Some(uid) = uid {
+                new_email.id = uid as i64;
+            }
+            emails.push(new_email);
+            /* new_email
+            .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+            .unwrap(); */
         }
     }
+    emails
 }

@@ -16,7 +16,7 @@
 	import { attachConsole } from 'tauri-plugin-log-api';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { expandedSidenav, initialize_events, logs, readyCheck, theme } from '@/stores/settings';
+	import { events, expandedSidenav, initialize_events, readyCheck, settings } from '@/stores/settings';
 	import { Toaster } from '@/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
 	import { fetchEmails } from '@/stores/emails';
@@ -36,16 +36,21 @@
 	fetch_logs();
 
 	async function fetch_logs() {
-		const new_logs = (await invoke('fetch_logs')) as Data.EventPayload[];
+		const new_logs = (await invoke('fetch_logs')) as Data.LogPayload[];
 		if (new_logs.length > 0) {
 			console.log('logs', new_logs);
+			const log_events: Data.CustomEvent[] = [];
 			for (const log of new_logs) {
-				if (log && log.payload && log.payload.hasOwnProperty('message')) {
-					toast((log.payload as Data.LogPayload).message);
-				}
+				toast(log.message);
+				log_events.push({
+					event: 'log',
+					payload: log,
+					time: new Date().getTime().toString()
+				});
 			}
-			logs.update((old_logs) => {
-				return [...old_logs, ...new_logs];
+			events.update((events) => {
+				events = log_events.concat(events);
+				return events;
 			});
 		}
 		// setTimeout(fetch_logs, 2000);
@@ -60,32 +65,41 @@
 		if (browser) {
 			console.log('storedTheme', localStorage.theme);
 			if (localStorage.theme === 'dark') {
-				theme.set('dark');
+				settings.update((settings) => {
+					settings.theme = 'dark';
+					return settings;
+				});
 				document.documentElement.classList.add('dark');
 			} else if (
 				!('theme' in localStorage) &&
 				window.matchMedia('(prefers-color-scheme: dark)').matches
 			) {
-				theme.set('dark');
+				settings.update((settings) => {
+					settings.theme = 'dark';
+					return settings;
+				});
 				document.documentElement.classList.add('dark');
 			} else {
 				document.documentElement.classList.remove('dark');
-				theme.set('light');
+				settings.update((settings) => {
+					settings.theme = 'light';
+					return settings;
+				});
 			}
 		}
 
-		theme.subscribe((value) => {
+		/* settings.subscribe((value) => {
 			console.log('theme', value);
 			localStorage.setItem('theme', value);
 			console.log('storedTheme', localStorage.theme);
 			if (value !== 'dark') {
 				document.documentElement.classList.remove('dark');
 			}
-		});
+		}); */
 
-		theme.subscribe((value) => {
-			localStorage.setItem('theme', value);
-			if (value === 'dark') {
+		settings.subscribe((settings) => {
+			localStorage.setItem('theme', settings.theme);
+			if (settings.theme === 'dark') {
 				document.documentElement.classList.add('dark');
 			} else {
 				document.documentElement.classList.remove('dark');
@@ -106,9 +120,7 @@
 		<SideNavButton {site} name="Mail" site_name="mail" href="/mail/inbox"
 			><MailIcon /></SideNavButton
 		>
-		<div class:pl-6={$expandedSidenav}>
-			<slot name="mail-sidebar" />
-		</div>
+		<slot name="mail-sidebar" />
 		<SideNavButton {site} name="Calendar" site_name="calendar" href="/calendar"
 			><CalendarIcon /></SideNavButton
 		>

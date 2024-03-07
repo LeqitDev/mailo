@@ -101,7 +101,7 @@
 				{email.subject}
 			</h3>
 			<p class="overflow-ellipsis text-muted-foreground" class:line-clamp-1={variant === "compact"} class:line-clamp-2={variant === "default"}>
-				{email.body.replaceAll(/\r?\n|\r|\n\r|<br>|<br\>/g, " ").replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
+				{email.body.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/g, "").replaceAll(/\r?\n|\r|\n\r|<br>|<br\>/g, " ").replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
 			</p>
 		</div>
 		<div>

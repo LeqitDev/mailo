@@ -237,6 +237,11 @@ fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHand
                                 .unwrap()
                                 .emit("action", action)
                                 .unwrap(),
+                            FrontendEvent::Notify(notify) => handle
+                                .get_window("main")
+                                .unwrap()
+                                .emit("notify", notify)
+                                .unwrap(),
                         }
                     }
                 }

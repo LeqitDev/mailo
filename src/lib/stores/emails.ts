@@ -16,3 +16,7 @@ export async function fetchEmails() {
         console.log('error fetching emails', error);
     });
 }
+
+export function emailSortDateFunction(a: Data.Email, b: Data.Email) {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+}
