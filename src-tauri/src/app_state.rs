@@ -4,12 +4,12 @@ use std::{
 };
 
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
-use tauri::api::path::app_data_dir;
+use serde::Serialize;
+use tauri::async_runtime::JoinHandle;
 
 use crate::{
     database::{get_database, Account, AccountTable},
-    settings::{Settings, SettingsTrait, SettingsWrapper},
+    settings::{SettingsTrait, SettingsWrapper},
 };
 
 pub struct AppState(pub Arc<Mutex<Shareble>>);
@@ -22,6 +22,8 @@ pub struct Shareble {
     pub events: Vec<FrontendEvent>,
     pub backend_closed: bool,
     pub settings_wrapper: SettingsWrapper,
+    pub imap_threads: Vec<ImapThread>,
+    pub session_master_password: Option<String>,
 }
 
 impl Shareble {
@@ -37,6 +39,8 @@ impl Shareble {
                 events: Vec::new(),
                 backend_closed: false,
                 settings_wrapper: settings,
+                imap_threads: Vec::new(),
+                session_master_password: None,
             },
             Err(e) => {
                 println!("Failed to get database connection: {:#?}", e);
@@ -47,6 +51,8 @@ impl Shareble {
                     events: Vec::new(),
                     backend_closed: false,
                     settings_wrapper: settings,
+                    imap_threads: Vec::new(),
+                    session_master_password: None,
                 }
             }
         }
@@ -75,6 +81,22 @@ impl Shareble {
             title: title.to_string(),
             body: body.to_string(),
         }));
+    }
+}
+
+pub struct ImapThread {
+    pub handle: JoinHandle<()>,
+    pub account_id: i64,
+    pub stop: bool,
+}
+
+impl From<(JoinHandle<()>, i64)> for ImapThread {
+    fn from((handle, account_id): (JoinHandle<()>, i64)) -> Self {
+        Self {
+            handle,
+            account_id,
+            stop: false,
+        }
     }
 }
 
@@ -111,9 +133,6 @@ pub trait EventDispatcher {
     fn log<T: ToString>(&mut self, message: T, log_type: LoggerType);
     fn log_error<T: ToString>(&mut self, message: T) {
         self.log(message, LoggerType::Error);
-    }
-    fn log_warning<T: ToString>(&mut self, message: T) {
-        self.log(message, LoggerType::Warning);
     }
     fn log_info<T: ToString>(&mut self, message: T) {
         self.log(message, LoggerType::Info);
@@ -152,7 +171,6 @@ pub struct ActionPayload {
 #[derive(Clone, Serialize, Debug)]
 pub enum LoggerType {
     Info,
-    Warning,
     Error,
 }
 

@@ -108,6 +108,13 @@
 
 		if (!$readyCheck.events_registered) {
 			initialize_events();
+			invoke('get_settings').then((backend_settings) => {
+				console.log('settings', settings);
+				settings.update((settings) => {
+					settings.backendSettings = backend_settings as Data.BackendSettings;
+					return settings;
+				});
+			});
 		}
 	});
 </script>

@@ -8,7 +8,6 @@ use async_imap::Session;
 use async_native_tls::TlsStream;
 use futures::TryStreamExt;
 use mail_parser::MessageParser;
-use notify_rust::{Hint, Timeout};
 use tokio::net::TcpStream;
 
 use crate::{
@@ -25,19 +24,38 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
             idle.init().await.unwrap();
             loop {
                 let (idle_wait, interrupt) = idle.wait();
+
                 let controll_app_state = app_state.clone();
                 let idle_stop = Arc::new(Mutex::new(false));
                 let cpy_idle_stop = idle_stop.clone();
+
+                let account_id = account.id;
                 tokio::spawn(async move {
                     loop {
+                        // if all threads are stopped, stop the idle
                         if controll_app_state.lock().unwrap().logout
                             || *cpy_idle_stop.lock().unwrap()
                         {
                             drop(interrupt);
                             break;
                         }
+
+                        // if this thread is stopped, stop the idle
+                        if let Some(thread) = controll_app_state
+                            .lock()
+                            .unwrap()
+                            .imap_threads
+                            .iter()
+                            .find(|thread| thread.account_id == account_id)
+                        {
+                            if thread.stop {
+                                drop(interrupt);
+                                break;
+                            }
+                        }
                     }
                 });
+
                 let idle_result = idle_wait.await;
                 if let Ok(result) = idle_result {
                     match result {
@@ -48,7 +66,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                         async_imap::extensions::idle::IdleResponse::NewData(data) => {
                             let bytes = data.borrow_owner().to_vec();
                             let msg = from_utf8(bytes.as_slice()).unwrap_or("");
-                            let splitted_msg: Vec<&str> = msg.split(" ").collect();
+                            let splitted_msg: Vec<&str> = msg.split(' ').collect();
                             let email_id = splitted_msg
                                 .get(1)
                                 .unwrap_or(&"")
@@ -74,12 +92,6 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                                         .push(app_state.lock().unwrap().sql.as_ref().unwrap())
                                         .unwrap();
                                 });
-                                /* notify_rust::Notification::new()
-                                .summary("New email(s)")
-                                .body(&notification_body)
-                                .timeout(Timeout::Never)
-                                .show()
-                                .unwrap(); */
                                 app_state.notify("New email(s)", &notification_body);
                                 app_state.action("fetch_emails", "");
                                 idle = session.idle();
@@ -92,6 +104,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                     app_state.log_error(idle_result.err().unwrap());
                 }
             }
+
             let session = idle.done().await; // TODO: is error sometimes?
             app_state.log_info("Logging out from imap!");
             println!("Logging out from imap!");
@@ -105,7 +118,6 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                     app_state.log_error(e);
                 }
             }
-            // app_state.lock().unwrap().backend_closed = true;
         }
         Err(e) => {
             app_state.log_error(e);

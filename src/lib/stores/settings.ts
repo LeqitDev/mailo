@@ -19,8 +19,10 @@ export const readyCheck: Writable<{ ready: boolean, events_registered: boolean }
 
 const defaultSettings: Data.Settings = {
     theme: 'light',
-    lazyloadingenabled: true,
-    masterpassword: false,
+    lazyLoadingEnabled: true,
+    backendSettings: {
+        masterpassword: false,
+    },
     dashboardEmailFilter: "unseen"
 }
 

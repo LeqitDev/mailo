@@ -206,16 +206,20 @@ fn fetch_logs(state: tauri::State<AppState>) -> Result<Vec<LoggerPayload>, Strin
 fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHandle) {
     tauri::async_runtime::spawn(async move {
         loop {
+            // stop the loop if the app is logging out
             if app_state.lock().unwrap().logout {
                 break;
             }
             if let Ok(mut app_state) = app_state.lock() {
+                // wait for the frontend to be ready
                 if !app_state.frontend_ready {
                     continue;
                 }
+
+                // clone and clear the events
                 let mut events = app_state.events.clone();
                 app_state.events.clear();
-                // drop(app_state);
+
                 // remove duplicate action events
                 events.dedup_by(|a, b| {
                     if let (FrontendEvent::Action(a), FrontendEvent::Action(b)) = (a, b) {
@@ -226,7 +230,8 @@ fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHand
                 });
                 if !events.is_empty() {
                     println!("Sending events to frontend: {:#?}", events);
-                    // weird thing the third event does not fire
+                    // TODO: weird thing the third event does not fire
+                    // dispatch the different events to the frontend
                     for event in events {
                         match event {
                             FrontendEvent::Log(log) => {
@@ -246,7 +251,7 @@ fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHand
                     }
                 }
             }
-            tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+            tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await; // let the thread sleep for a bit
         }
     });
 }
@@ -278,6 +283,80 @@ fn add_event(state: tauri::State<AppState>, event_type: String, payload: String)
     }
 }
 
+#[tauri::command]
+fn set_session_master_password(
+    state: tauri::State<AppState>,
+    password: String,
+) -> Result<(), String> {
+    if let Ok(mut state) = state.0.lock() {
+        state.session_master_password = Some(password);
+        Ok(())
+    } else {
+        Err("Failed to lock state".to_string())
+    }
+}
+
+#[tauri::command]
+fn start_all_imap_threads(state: tauri::State<AppState>) {
+    start_imap_threads(state);
+}
+
+#[tauri::command]
+fn start_specific_imap_thread(
+    state: tauri::State<AppState>,
+    id: i64,
+    account: Account,
+) -> Result<(), String> {
+    start_imap_thread(state.inner().0.clone(), id, account);
+    Ok(())
+}
+
+#[tauri::command]
+async fn stop_imap_thread(state: tauri::State<'_, AppState>, id: i64) -> Result<(), String> {
+    let imap_thread: Result<app_state::ImapThread, String> = if let Ok(mut state) = state.0.lock() {
+        if let Some(imap_thread_idx) = state
+            .imap_threads
+            .iter()
+            .position(|thread| thread.account_id == id)
+        {
+            state.imap_threads[imap_thread_idx].stop = true;
+            Ok(state.imap_threads.remove(imap_thread_idx))
+        } else {
+            Err("Failed to find imap thread".to_string())
+        }
+    } else {
+        Err("Failed to lock state".to_string())
+    };
+
+    match imap_thread {
+        Ok(imap_thread) => {
+            imap_thread.handle.await.map_err(|e| e.to_string())?;
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+fn start_imap_threads(app_state: tauri::State<AppState>) {
+    for account in app_state.get_accounts().unwrap() {
+        let id = account.id;
+        start_imap_thread(app_state.inner().0.clone(), id, account.clone());
+    }
+}
+
+fn start_imap_thread(app_state: Arc<Mutex<Shareble>>, id: i64, account: Account) {
+    let cloned_app_state = Arc::clone(&app_state);
+
+    let handle = tauri::async_runtime::spawn(async move {
+        imap(cloned_app_state, account).await;
+    });
+    app_state
+        .lock()
+        .unwrap()
+        .imap_threads
+        .push((handle, id).into());
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -293,7 +372,11 @@ fn main() {
             get_settings,
             add_event,
             delete_account,
-            update_account
+            update_account,
+            set_session_master_password,
+            start_all_imap_threads,
+            start_specific_imap_thread,
+            stop_imap_thread
         ])
         .setup(|app| {
             let handle = app.handle();

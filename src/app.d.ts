@@ -44,10 +44,14 @@ declare global {
 
 		interface Settings {
 			theme: 'light' | 'dark';
-			lazyloadingenabled: boolean;
-			masterpassword: boolean;
+			lazyLoadingEnabled: boolean;
+			backendSettings: BackendSettings;
 			dashboardEmailFilter: "unseen" | "recent" | "favorite" | "accountSpecific";
 			dashboardEmailFilterAccountId?: string;
+		}
+
+		interface BackendSettings {
+			masterpassword: boolean;
 		}
 
 		interface CustomEvent {
