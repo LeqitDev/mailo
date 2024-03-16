@@ -82,6 +82,11 @@
 				.then((result) => {
 					open = false;
 					fetchAccounts();
+					invoke('start_specific_imap_thread', { id: account.id, account: account }).then(() => {
+						console.log('imap thread started');
+					}).catch((error) => {
+						console.log('error', error);
+					});
 					toast('Account updated successfully');
 				})
 				.catch((error) => {

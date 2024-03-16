@@ -15,7 +15,7 @@
 
 	onMount(() => {
 		ready = true;
-        if (!$settings.lazyloadingenabled) {
+        if (!$settings.lazyLoadingEnabled) {
             visible_emails = 99999;
         }
 	});

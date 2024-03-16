@@ -36,10 +36,13 @@
 				})
 				.then(() => {
 					console.log('frontend ready');
-					readyCheck.update((readyCheck) => {
-						readyCheck.ready = true;
-						return readyCheck;
-					});
+					invoke('start_all_imap_threads').then(() => {
+						console.log('all imap threads started');
+						readyCheck.update((readyCheck) => {
+							readyCheck.ready = true;
+							return readyCheck;
+						});
+					})
 				});
 		}
 	});
@@ -79,21 +82,23 @@
 
 <CustomLayout site="home">
 	<!-- darkmode toggle -->
-	<div class="overflow-y-auto p-2 flex-shrink">
+	<div class="overflow-y-auto p-2 flex-shrink w-full">
 		<!-- Dashboard welcome phrase -->
 		<h1 class="mb-4 text-3xl font-bold ml-4 mt-4">Welcome to your Dashboard.</h1>
 		<div class="lg:flex w-full items-start gap-4">
-			<div class="transparent flex-grow rounded-sm px-4 pb-4 pt-1">
+			<div class="transparent flex-1 rounded-sm px-4 pb-4 pt-1 lg:w-screen w-full">
 				<div class="flex justify-between items-center">
 					<p class="mb-2 text-xl font-semibold">New & recent emails</p>
-					<p class="text-sm text-muted-foreground">{recentEmails.length - 14} more unseen emails hidden</p>
+					{#if recentEmails.length > 14}
+						<p class="text-sm text-muted-foreground">{recentEmails.length - 14} more unseen emails hidden</p>
+					{/if}
 				</div>
 				{#each recentEmails.slice(0, 14) as email, id (email.id)}
 					<EmailPreview {email} {id} variant="compact" />
 				{/each}
 				<Button variant="link" href="/mail/inbox" class="mt-2">View all</Button>
 			</div>
-			<div class="min-w-max">
+			<div class="lg:w-max w-full">
 				<div class="px-4 pb-4 pt-1">
 					<div class="mb-2 flex justify-between items-center">
 						<p class="text-xl font-semibold">Manage your accounts</p>

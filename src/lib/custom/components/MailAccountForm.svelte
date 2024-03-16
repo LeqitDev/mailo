@@ -3,11 +3,12 @@
     import * as Form from "$lib/components/ui/form";
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { parseAccountForm } from "@/utils";
-	import { fetchAccounts } from "@/stores/accounts";
+	import { accounts, fetchAccounts } from "@/stores/accounts";
     import { toast } from "svelte-sonner";
 	import { type SuperValidated, type Infer, superForm } from "sveltekit-superforms";
     import { zodClient } from "sveltekit-superforms/adapters";
 	import { Input } from "@/components/ui/input";
+	import { error } from "tauri-plugin-log-api";
 
     export let id = "mail-account-form";
     export let form_data: SuperValidated<Infer<MailAccount>>;
@@ -39,6 +40,14 @@
             invoke('add_account', parseAccountForm(input.formData)).then((result) => {
                 onSuccessfulSubmit();
                 fetchAccounts();
+                let new_account = $accounts.find((account) => account.email === input.formData.get("email"));
+                if (new_account) {
+                    invoke('start_specific_imap_thread', {id: new_account.id, account: new_account}).then(() => {
+                        console.log('imap thread started');
+                    }).catch((error) => {
+                        console.log('error', error);
+                    });
+                }
                 toast('Account added successfully');
             }).catch((error) => {
                 console.log('error', error);

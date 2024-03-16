@@ -4,19 +4,19 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use async_imap::Session;
+use async_imap::{Session};
 use async_native_tls::TlsStream;
 use futures::TryStreamExt;
 use mail_parser::MessageParser;
 use tokio::net::TcpStream;
 
 use crate::{
-    app_state::EventDispatcher,
+    app::{events::EventDispatcher},
     database::{Account, Email, EmailTable},
     Shareble,
 };
 
-pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
+pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
     // sleeep
     match initiliaze_imap(&mut app_state, account.clone()).await {
         Ok(session) => {
@@ -31,29 +31,7 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
 
                 let account_id = account.id;
                 tokio::spawn(async move {
-                    loop {
-                        // if all threads are stopped, stop the idle
-                        if controll_app_state.lock().unwrap().logout
-                            || *cpy_idle_stop.lock().unwrap()
-                        {
-                            drop(interrupt);
-                            break;
-                        }
-
-                        // if this thread is stopped, stop the idle
-                        if let Some(thread) = controll_app_state
-                            .lock()
-                            .unwrap()
-                            .imap_threads
-                            .iter()
-                            .find(|thread| thread.account_id == account_id)
-                        {
-                            if thread.stop {
-                                drop(interrupt);
-                                break;
-                            }
-                        }
-                    }
+                    state_observer(controll_app_state, account_id, interrupt, cpy_idle_stop);
                 });
 
                 let idle_result = idle_wait.await;
@@ -125,11 +103,43 @@ pub async fn imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
     }
 }
 
+fn state_observer(
+    app_state: Arc<Mutex<Shareble>>,
+    account_id: i64,
+    interrupt: stop_token::StopSource,
+    idle_stop: Arc<Mutex<bool>>,
+) {
+    loop {
+        // if all threads are stopped, stop the idle
+        if app_state.lock().unwrap().logout || *idle_stop.lock().unwrap() {
+            drop(interrupt);
+            break;
+        }
+
+        // if this thread is stopped, stop the idle
+        if let Some(thread) = app_state
+            .lock()
+            .unwrap()
+            .imap_threads
+            .iter()
+            .find(|thread| thread.account_id == account_id)
+        {
+            if thread.stop {
+                drop(interrupt);
+                break;
+            }
+        }
+    }
+}
+
 async fn initiliaze_imap(
     app_state: &mut Arc<Mutex<Shareble>>,
     account: Account,
 ) -> Result<Session<TlsStream<TcpStream>>, Box<dyn Error + Send + Sync>> {
+    // connect to server
     let imap_addr = (account.imap_host.as_str(), account.imap_port as u16);
+
+    // enable tls
     let tcp_stream = TcpStream::connect(imap_addr).await?;
     let tls = async_native_tls::TlsConnector::new();
     let tls_stream = tls.connect(account.imap_host.as_str(), tcp_stream).await?;
@@ -155,6 +165,7 @@ async fn initiliaze_imap(
         .get_email_count(account.id);
     match last_email {
         Ok(email) => {
+            // if there are emails in the database fetch only new ones
             let last_emails = (email as i32 - 100).max(1) as u32;
             fetch_emails(
                 app_state,
@@ -171,6 +182,9 @@ async fn initiliaze_imap(
                     .unwrap();
             });
             app_state.action("fetch_emails", "");
+
+            // then fetch all to look for updated flags
+            // TODO: fetch only the flags
             fetch_emails(
                 app_state,
                 &mut imap_session,
@@ -188,6 +202,8 @@ async fn initiliaze_imap(
         }
         Err(e) => match e {
             rusqlite::Error::QueryReturnedNoRows => {
+                // if there are no emails yet fetch all
+                app_state.log_info("No emails found in the database! Try fetching all emails!");
                 fetch_emails(app_state, &mut imap_session, account, 1, -1)
                     .await
                     .iter()
@@ -196,7 +212,6 @@ async fn initiliaze_imap(
                             .push(app_state.lock().unwrap().sql.as_ref().unwrap())
                             .unwrap();
                     });
-                app_state.log_info("No emails found in the database!");
             }
             _ => {
                 app_state.log_info(e.to_string());
@@ -216,30 +231,35 @@ async fn fetch_emails(
     to: i32,
 ) -> Vec<Email> {
     let mut emails = vec![];
+    let fetch_info = format!(
+        "{}:{}",
+        from,
+        if to < 0 {
+            "*".to_string()
+        } else {
+            to.to_string()
+        }
+    );
     let messages_stream = session
-        .fetch(
-            format!(
-                "{}:{}",
-                from,
-                if to < 0 {
-                    "*".to_string()
-                } else {
-                    to.to_string()
-                }
-            ),
-            "(BODY.PEEK[] FLAGS)",
-        )
+        .fetch(fetch_info, "(BODY.PEEK[] FLAGS)")
         .await
         .unwrap();
+
     let messages: Vec<_> = messages_stream.try_collect().await.unwrap();
     app_state.log_info(format!("Fetched {} new emails!", messages.len()));
+
+    // Parse the messages
     for raw_message in messages {
         let flags: Vec<_> = raw_message.flags().collect();
         let uid = raw_message.uid;
+
+        // Parse body
         if let Some(body) = raw_message.body() {
             let message = MessageParser::default()
                 .parse(std::str::from_utf8(body).unwrap())
                 .unwrap();
+
+            // Create new email object
             let mut new_email = Email::from(message);
             new_email.set_flags(flags);
             new_email.account_id = account.id;
@@ -247,9 +267,6 @@ async fn fetch_emails(
                 new_email.id = uid as i64;
             }
             emails.push(new_email);
-            /* new_email
-            .push(app_state.lock().unwrap().sql.as_ref().unwrap())
-            .unwrap(); */
         }
     }
     emails
