@@ -4,15 +4,15 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use async_imap::{Session};
+use async_imap::Session;
 use async_native_tls::TlsStream;
 use futures::TryStreamExt;
 use mail_parser::MessageParser;
 use tokio::net::TcpStream;
 
 use crate::{
-    app::{events::EventDispatcher},
-    database::{Account, Email, EmailTable},
+    app::events::EventDispatcher,
+    database::{account::Account, email::{Email, EmailTable}},
     Shareble,
 };
 

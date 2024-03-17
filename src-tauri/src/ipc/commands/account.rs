@@ -1,5 +1,5 @@
 
-use crate::{app::AppState, database::{Account, AccountTable}};
+use crate::{app::AppState, database::account::{Account, AccountTable}};
 use base64::prelude::*;
 
 #[tauri::command]

@@ -1,4 +1,4 @@
-use crate::database::{Account, AccountTable};
+use crate::database::account::{Account, AccountTable};
 
 use super::AppState;
 

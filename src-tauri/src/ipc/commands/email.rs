@@ -1,4 +1,4 @@
-use crate::{app::AppState, database::{AccountTable, Email, EmailTable}};
+use crate::{app::AppState, database::{account::AccountTable, email::{Email, EmailTable}}};
 
 #[tauri::command]
 pub fn get_emails(state: tauri::State<AppState>) -> Result<Vec<Email>, String> {

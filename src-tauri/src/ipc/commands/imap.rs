@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use crate::{app::{accounts::AccountAccessor, imap_thread::ImapThread, state::Shareble, AppState}, database::Account, imap::run_imap};
+use crate::{app::{accounts::AccountAccessor, imap_thread::ImapThread, state::Shareble, AppState}, database::account::Account, imap::run_imap};
 
 #[tauri::command]
 pub fn start_all_imap_threads(state: tauri::State<AppState>) {
