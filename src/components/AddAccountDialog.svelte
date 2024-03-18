@@ -1,7 +1,7 @@
 <script lang="ts">
     import * as Dialog from '$lib/components/ui/dialog';
 	import { Button, buttonVariants } from '@/components/ui/button';
-	import MailAccountForm from './MailAccountForm.svelte';
+	import MailAccountForm from '§/components/MailAccountForm.svelte';
 
     let open: boolean;
     export let data: any;

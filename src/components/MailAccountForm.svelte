@@ -3,7 +3,7 @@
     import * as Form from "$lib/components/ui/form";
 	import { invoke } from "@tauri-apps/api/tauri";
 	import { parseAccountForm } from "@/utils";
-	import { accounts, fetchAccounts } from "@/stores/accounts";
+	import { accounts, fetchAccounts } from '@/store';
     import { toast } from "svelte-sonner";
 	import { type SuperValidated, type Infer, superForm } from "sveltekit-superforms";
     import { zodClient } from "sveltekit-superforms/adapters";
@@ -37,9 +37,9 @@
     const form = superForm(form_data, {
         validators: zodClient(mailAccountSchema),
         onSubmit(input) {
-            invoke('add_account', parseAccountForm(input.formData)).then((result) => {
+            invoke('add_account', parseAccountForm(input.formData)).then(async (result) => {
                 onSuccessfulSubmit();
-                fetchAccounts();
+                await fetchAccounts();
                 let new_account = $accounts.find((account) => account.email === input.formData.get("email"));
                 if (new_account) {
                     invoke('start_specific_imap_thread', {id: new_account.id, account: new_account}).then(() => {

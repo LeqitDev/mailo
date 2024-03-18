@@ -1,4 +1,4 @@
-import { accountSettingsSchema, mailAccountSchema } from "$lib/custom/components/schema";
+import { accountSettingsSchema, mailAccountSchema } from "§/components/schema";
 import { zod } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms";
 

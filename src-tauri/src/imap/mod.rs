@@ -17,7 +17,6 @@ use crate::{
 };
 
 pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
-    // sleeep
     match initiliaze_imap(&mut app_state, account.clone()).await {
         Ok(session) => {
             let mut idle = session.idle();
@@ -42,36 +41,34 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                         }
                         async_imap::extensions::idle::IdleResponse::Timeout => {}
                         async_imap::extensions::idle::IdleResponse::NewData(data) => {
+                            // Convert the incoming data into a byte vector and parse it
                             let bytes = data.borrow_owner().to_vec();
                             let msg = from_utf8(bytes.as_slice()).unwrap_or("");
                             let splitted_msg: Vec<&str> = msg.split(' ').collect();
-                            let email_id = splitted_msg
-                                .get(1)
-                                .unwrap_or(&"")
-                                .parse::<u32>()
-                                .unwrap_or(0);
+                            let email_id = splitted_msg.get(1).unwrap_or(&"").parse::<u32>().unwrap_or(0);
                             println!("New data: {} {}", msg, email_id);
+
+                            // If the message indicates new emails exist
                             if splitted_msg.get(2).unwrap().contains("EXISTS") {
+                                // End the IDLE state and get the session
                                 let mut session = idle.done().await.unwrap();
+
+                                // Fetch the new emails and build a notification body
                                 let mut notification_body = String::new();
-                                fetch_emails(
-                                    &mut app_state,
-                                    &mut session,
-                                    account.clone(),
-                                    email_id,
-                                    -1,
-                                )
-                                .await
-                                .iter()
-                                .for_each(|email| {
-                                    notification_body.push_str(&email.subject);
-                                    notification_body.push('\n');
-                                    email
-                                        .push(app_state.lock().unwrap().sql.as_ref().unwrap())
-                                        .unwrap();
-                                });
+                                fetch_emails(&mut app_state, &mut session, account.clone(), email_id, -1)
+                                    .await
+                                    .iter()
+                                    .for_each(|email| {
+                                        notification_body.push_str(&email.subject);
+                                        notification_body.push('\n');
+                                        email.push(app_state.lock().unwrap().sql.as_ref().unwrap()).unwrap();
+                                    });
+
+                                // Notify the user of the new emails and trigger the fetch_emails action
                                 app_state.notify("New email(s)", &notification_body);
                                 app_state.action("fetch_emails", "");
+
+                                // Restart the IDLE state
                                 idle = session.idle();
                                 idle.init().await.unwrap();
                             }
@@ -99,6 +96,18 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
         }
         Err(e) => {
             app_state.log_error(e);
+        }
+    }
+    
+    // Remove the thread from the list
+    if let Ok(mut state) = app_state.lock() {
+        if let Some(imap_thread_idx) = state
+            .imap_threads
+            .iter()
+            .position(|thread| thread.account_id == account.id)
+        {
+            drop(state.imap_threads.remove(imap_thread_idx));
+            println!("Removed imap thread: {}, array length: {}", account.id, state.imap_threads.len());
         }
     }
 }
@@ -136,10 +145,9 @@ async fn initiliaze_imap(
     app_state: &mut Arc<Mutex<Shareble>>,
     account: Account,
 ) -> Result<Session<TlsStream<TcpStream>>, Box<dyn Error + Send + Sync>> {
-    // connect to server
+    // Establish a secure connection to the IMAP server and log in
     let imap_addr = (account.imap_host.as_str(), account.imap_port as u16);
 
-    // enable tls
     let tcp_stream = TcpStream::connect(imap_addr).await?;
     let tls = async_native_tls::TlsConnector::new();
     let tls_stream = tls.connect(account.imap_host.as_str(), tcp_stream).await?;
@@ -153,9 +161,13 @@ async fn initiliaze_imap(
         .map_err(|e| e.0)?;
     app_state.log_info(format!("-- logged in a {}", account.username));
 
+
+    // Select the INBOX mailbox
     let mailbox = imap_session.select("INBOX").await?;
     app_state.log_info(format!("-- select a mailbox: {:?}", mailbox));
 
+
+    // Fetch emails based on the last email in the database
     let last_email = app_state
         .lock()
         .unwrap()

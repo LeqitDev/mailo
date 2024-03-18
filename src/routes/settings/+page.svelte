@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { events } from "@/stores/settings";
+	import { events } from '@/store';
 
     function getTimeString(time: string | undefined) {
         if (!time) return '';

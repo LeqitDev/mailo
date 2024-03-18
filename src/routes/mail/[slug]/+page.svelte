@@ -1,12 +1,12 @@
 <script lang="ts">
-	import EmailPreview from "@/custom/components/EmailPreview.svelte";
+	import EmailPreview from "§/components/EmailPreview.svelte";
 	import { Button } from "@/components/ui/button";
-	import { emailSortDateFunction, emails, fetchEmails, selected_previews } from "@/stores/emails";
+	import { emailSortDateFunction, emails, fetchEmails, selected_previews } from '@/store';
 	import type { PageData } from './$types';
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
-	import { settings, searchEmail, search_string } from "@/stores/settings";
-	import { selected_account } from "@/stores/accounts";
+	import { settings, searchEmail, search_string } from '@/store';
+	import { selected_account } from '@/store';
 
     export let data: PageData;
 	$: ready = false;
@@ -20,7 +20,7 @@
         }
 	});
 
-    $: filteredEmails = $emails.sort(emailSortDateFunction).filter(email => {
+    $: filteredEmails = $emails.filter(email => {
         if (!searchEmail(email, $search_string)) return false;
         if ($selected_account && email.account_id !== $selected_account.id) return false;
         switch (data.slug) {

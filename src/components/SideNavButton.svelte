@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from "@/components/ui/button";
-	import { expandedSidenav } from "@/stores/settings";
+	import { expandedSidenav } from '@/store';
 
     export let site: string;
     export let name: string;

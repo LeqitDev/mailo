@@ -3,30 +3,9 @@ import { toast } from "svelte-sonner";
 import { writable, type Writable } from "svelte/store";
 import { fetchEmails } from "./emails";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/api/notification";
-
-export const search_string = writable('');
-
-export const expandedSidenav = writable(false);
-
-export function searchEmail(email: Data.Email, search_string: string) {
-    return email.subject.toLowerCase().includes(search_string.toLowerCase()) ||
-        email.sender.toLowerCase().includes(search_string.toLowerCase()) ||
-        email.body.replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ").toLowerCase().includes(search_string.toLowerCase());
-}
+import { readyCheck } from "./settings";
 
 export const events: Writable<Data.CustomEvent[]> = writable([]);
-export const readyCheck: Writable<{ ready: boolean, events_registered: boolean }> = writable({ ready: false, events_registered: false });
-
-const defaultSettings: Data.Settings = {
-    theme: 'light',
-    lazyLoadingEnabled: true,
-    backendSettings: {
-        masterpassword: false,
-    },
-    dashboardEmailFilter: "unseen"
-}
-
-export const settings = writable(defaultSettings);
 
 export async function initialize_events() {
         await listen('log', (raw_event) => {

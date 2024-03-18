@@ -1,7 +1,7 @@
 <script lang="ts">
-	import CustomLayout from "@/custom/layouts/_customLayout.svelte";
+	import CustomLayout from "§/components/RootLayout.svelte";
     import type { PageData } from "./$types";
-    import { accounts } from "@/stores/accounts";
+    import { accounts } from '@/store';
     import * as Avatar from "@/components/ui/avatar";
 	import { superForm } from "sveltekit-superforms/client";
 	import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@
     import * as Form from "$lib/components/ui/form";
 	import { zodClient } from "sveltekit-superforms/adapters";
 	import { invoke } from "@tauri-apps/api/tauri";
-	import { accountSettingsSchema } from "@/custom/components/schema";
+	import { accountSettingsSchema } from "§/components/schema";
 	import { Input } from "@/components/ui/input";
 	import { fade, fly, slide } from "svelte/transition";
 

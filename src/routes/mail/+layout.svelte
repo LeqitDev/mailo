@@ -12,17 +12,17 @@
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { accounts, fetchAccounts, selected_account } from '@/stores/accounts';
-	import MailAccountForm from '$lib/custom/components/MailAccountForm.svelte';
+	import { accounts, fetchAccounts, selected_account } from '@/store';
+	import MailAccountForm from '§/components/MailAccountForm.svelte';
 	import type { LayoutData } from './$types';
 	import { invoke } from '@tauri-apps/api/tauri';
-	import { expandedSidenav, search_string } from '@/stores/settings';
-	import { selected_previews } from '@/stores/emails';
-	import CustomLayout from '$lib/custom/layouts/_customLayout.svelte';
+	import { expandedSidenav, search_string } from '@/store';
+	import { selected_previews } from '@/store';
+	import CustomLayout from '§/components/RootLayout.svelte';
 	import { fade, fly, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import SideNavButton from '@/custom/components/SideNavButton.svelte';
-	import AddAccountDialog from '@/custom/components/AddAccountDialog.svelte';
+	import SideNavButton from '§/components/SideNavButton.svelte';
+	import AddAccountDialog from '§/components/AddAccountDialog.svelte';
 
 	export let data: LayoutData;
 

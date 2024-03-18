@@ -87,7 +87,15 @@ pub fn update_account(state: tauri::State<AppState>, mut account: Account) -> Re
 
 #[tauri::command]
 pub fn delete_account(state: tauri::State<AppState>, id: i64) -> Result<(), String> {
-    if let Ok(state) = state.0.lock() {
+    if let Ok(mut state) = state.0.lock() {
+        // close possible running imap thread
+        if let Some(imap_thread_idx) = state
+            .imap_threads
+            .iter()
+            .position(|thread| thread.account_id == id)
+        {
+            state.imap_threads[imap_thread_idx].stop = true;
+        }
         if let Some(conn) = state.sql.as_ref() {
             conn.delete_account(id).map_err(|e| e.to_string())
         } else {

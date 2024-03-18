@@ -16,12 +16,12 @@
 	import { attachConsole } from 'tauri-plugin-log-api';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { events, expandedSidenav, initialize_events, readyCheck, settings } from '@/stores/settings';
+	import { events, expandedSidenav, initialize_events, readyCheck, settings } from '@/store';
 	import { Toaster } from '@/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
-	import { fetchEmails } from '@/stores/emails';
+	import { fetchEmails } from '@/store';
 	import { browser } from '$app/environment';
-	import SideNavButton from '../components/SideNavButton.svelte';
+	import SideNavButton from '§/components/SideNavButton.svelte';
 
 	export let site: string;
 

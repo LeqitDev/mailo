@@ -3,7 +3,7 @@
 	import type { PageData } from "./$types";
 	import { Button } from "@/components/ui/button";
 	import { ArrowLeftIcon } from "lucide-svelte";
-	import { search_string } from "@/stores/settings";
+	import { search_string } from '@/store';
     
     export let data: PageData;
 

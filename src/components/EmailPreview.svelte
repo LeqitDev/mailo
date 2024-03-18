@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { selected_previews } from "@/stores/emails";
+	import { selected_previews } from '@/store';
 	import { redirect } from "@sveltejs/kit";
-	import { Button } from "../../components/ui/button";
+	import { Button } from "@/components/ui/button";
 	import { formatTimestamp } from "@/utils";
-	import { search_string } from "@/stores/settings";
+	import { search_string } from '@/store';
 	import { onMount } from "svelte";
 	import * as ContextMenu from "@/components/ui/context-menu";
 
@@ -76,9 +76,11 @@
 			rect.right <= (window.innerWidth || document.documentElement.clientWidth)
 		);
 	}
+
+	let open = false;
 </script>
 {#if email}
-	<ContextMenu.Root>
+	<ContextMenu.Root onOutsideClick={() => open = false} bind:open={open}>
 		<ContextMenu.Trigger>
 			<button
 		class="flex w-full select-none justify-between gap-1 border-b p-1 text-left text-xs outline-none"

@@ -1,4 +1,4 @@
-import { accountSettingsSchema } from "@/custom/components/schema";
+import { accountSettingsSchema } from "§/components/schema";
 import { invoke } from "@tauri-apps/api/tauri";
 import { zod } from "sveltekit-superforms/adapters";
 import { superValidate } from "sveltekit-superforms";

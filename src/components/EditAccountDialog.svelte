@@ -10,7 +10,7 @@
 	import { Description } from 'formsnap';
 	import { Label } from '@/components/ui/label';
 	import { invoke, type InvokeArgs } from '@tauri-apps/api/tauri';
-	import { fetchAccounts } from '@/stores/accounts';
+	import { fetchAccounts } from '@/store';
 	import { toast } from 'svelte-sonner';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 

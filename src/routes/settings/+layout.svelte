@@ -1,6 +1,6 @@
 <script>
 
-	import CustomLayout from "@/custom/layouts/_customLayout.svelte";
+	import CustomLayout from "§/components/RootLayout.svelte";
 
 </script>
 

@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import { MoonIcon, SunIcon, ArrowBigDownIcon, HomeIcon, MailIcon, PlusIcon, Settings2Icon, MoreVerticalIcon, UserCogIcon } from 'lucide-svelte';
-	import CustomLayout from '../lib/custom/layouts/_customLayout.svelte';
-	import { readyCheck, settings } from '@/stores/settings';
+	import CustomLayout from '../components/RootLayout.svelte';
+	import { readyCheck, settings } from '@/store';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { onMount } from 'svelte';
 	import * as RadioGroup from '$lib/components/ui/radio-group';
 	import { Label } from '@/components/ui/label';
-	import { emailSortDateFunction, emails } from '@/stores/emails';
-	import EmailPreview from '@/custom/components/EmailPreview.svelte';
+	import { emailSortDateFunction, emails } from '@/store';
+	import EmailPreview from '§/components/EmailPreview.svelte';
 	import { split } from 'postcss/lib/list';
-	import { accounts } from '@/stores/accounts';
+	import { accounts } from '@/store';
 	import * as Avatar from '@/components/ui/avatar';
 	import { cn } from '@/utils';
 	import type { PageData } from './$types';
-	import AddAccountDialog from '@/custom/components/AddAccountDialog.svelte';
-	import EditAccountDialog from '@/custom/components/EditAccountDialog.svelte';
+	import AddAccountDialog from '§/components/AddAccountDialog.svelte';
+	import EditAccountDialog from '§/components/EditAccountDialog.svelte';
 
 	export let data: PageData;
 	console.log('data', data);
@@ -73,7 +73,6 @@
 	}
 
 	$: recentEmails = $emails
-		.sort(emailSortDateFunction)
 		.filter((email) => {
 			if (email.flags.seen) return false;
 			return true;

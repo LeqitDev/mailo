@@ -1,4 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use tauri::async_runtime::JoinHandle;
+
+use crate::database::account::Account;
+
+use super::state::Shareble;
 
 pub struct ImapThread {
     pub handle: JoinHandle<()>,
