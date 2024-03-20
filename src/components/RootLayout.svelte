@@ -121,7 +121,7 @@
 
 <Toaster />
 
-<main class="flex h-full w-full">
+<main class={`flex h-full w-full font-${$settings.fontFamily}`}>
 	<div class="flex h-full flex-col gap-2 border-r p-1 pt-2" class:min-w-60={$expandedSidenav}>
 		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Home" site_name="home" href="/"><HomeIcon /></SideNavButton>
 		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Mail" site_name="mail" href="/mail/inbox"

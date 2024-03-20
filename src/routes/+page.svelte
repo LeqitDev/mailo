@@ -59,7 +59,7 @@
 				<div class="flex justify-between items-center">
 					<p class="mb-2 text-xl font-semibold">New & recent emails</p>
 					{#if recentEmails.length > $settings.dashboardViewCount}
-						<p class="text-sm text-muted-foreground">{recentEmails.length - $settings.dashboardViewCount} more unseen emails hidden</p>
+						<p class="text-sm text-muted-foreground">{recentEmails.length - $settings.dashboardViewCount} more unseen emails</p>
 					{/if}
 				</div>
 				{#each recentEmails.slice(0, $settings.dashboardViewCount) as email, id (email.id)}

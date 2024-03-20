@@ -11,6 +11,7 @@
 	import { Label } from '@/components/ui/label';
 	import { Button } from '@/components/ui/button';
 	import { Switch } from '@/components/ui/switch';
+    import * as Select from '@/components/ui/select';
 	import MinimalThemeSwitcher from '§/components/MinimalThemeSwitcher.svelte';
 
 	export let data: PageData;
@@ -37,6 +38,10 @@
 		if (appearance) return 'appearance';
 		return 'security';
 	}
+
+    function capitalizeFirstLetter(string: string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 </script>
 
 <SettingsLayout bind:subsite>
@@ -92,6 +97,19 @@
 					<hr class="mt-1" />
 				</div>
 				<MinimalThemeSwitcher size="lg" title="Theme" />
+                <div class="grid gap-4">
+                    <p class="text-xl font-semibold">Font</p>
+                    <Select.Root selected={{label: capitalizeFirstLetter($settings.fontFamily), value: $settings.fontFamily}} onSelectedChange={value => {value && ($settings.fontFamily = value.value)}}>
+                        <Select.Trigger class="max-w-sm">
+                            <Select.Value placeholder="Select font" />
+                        </Select.Trigger>
+                        <Select.Content>
+                            <Select.Item value="sans">Sans</Select.Item>
+                            <Select.Item value="serif">Serif</Select.Item>
+                            <Select.Item value="mono">Mono</Select.Item>
+                        </Select.Content>
+                    </Select.Root>
+                </div>
 				<div class="grid gap-4">
 					<div class="grid gap-1">
 						<p class="text-xl font-semibold">Dashboard email view count</p>

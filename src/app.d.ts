@@ -44,6 +44,7 @@ declare global {
 
 		interface Settings {
 			theme: 'light' | 'dark';
+			fontFamily: "sans" | "serif" | "mono";
 			lazyLoading: {
 				enabled: boolean;
 				amount: number;

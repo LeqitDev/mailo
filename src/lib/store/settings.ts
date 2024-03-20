@@ -8,6 +8,7 @@ export const readyCheck: Writable<{ ready: boolean, events_registered: boolean }
 
 const defaultSettings: Data.Settings = {
     theme: 'light',
+    fontFamily: "sans",
     lazyLoading: {
         enabled: true,
         amount: 25,
