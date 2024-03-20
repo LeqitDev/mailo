@@ -49,7 +49,6 @@ declare global {
 				amount: number;
 			}
 			dashboardViewCount: number;
-			backendSettings: BackendSettings;
 			dashboardEmailFilter: "unseen" | "recent" | "favorite" | "accountSpecific";
 			dashboardEmailFilterAccountId?: string;
 		}

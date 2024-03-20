@@ -1,5 +1,6 @@
 export {
     settings,
+    backendSettings,
     expandedSidenav,
     readyCheck,
 } from './settings';

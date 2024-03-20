@@ -16,7 +16,7 @@
 	import { attachConsole } from 'tauri-plugin-log-api';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { events, expandedSidenav, initialize_events, readyCheck, settings } from '@/store';
+	import { backendSettings, events, expandedSidenav, initialize_events, readyCheck, settings } from '@/store';
 	import { Toaster } from '@/components/ui/sonner';
 	import { toast } from 'svelte-sonner';
 	import { fetchEmails } from '@/store';
@@ -110,8 +110,8 @@
 			initialize_events();
 			invoke('get_settings').then((backend_settings) => {
 				console.log('settings', settings);
-				settings.update((settings) => {
-					settings.backendSettings = backend_settings as Data.BackendSettings;
+				backendSettings.update((settings) => {
+					settings = backend_settings as Data.BackendSettings;
 					return settings;
 				});
 			});

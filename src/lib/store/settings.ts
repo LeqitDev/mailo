@@ -13,10 +13,8 @@ const defaultSettings: Data.Settings = {
         amount: 25,
     },
     dashboardViewCount: 10,
-    backendSettings: {
-        masterpassword: false,
-    },
     dashboardEmailFilter: "unseen"
 }
 
 export const settings = writable(defaultSettings);
+export const backendSettings: Writable<Data.BackendSettings> = writable({masterpassword: false});

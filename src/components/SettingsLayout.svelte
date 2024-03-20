@@ -15,10 +15,10 @@
 <CustomLayout site="settings">
     <div class="flex gap-4 w-full">
         <div class="flex flex-col border-r max-w-48 w-full my-4">
-                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="General" site_name="general" href="/settings" />
-                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Accounts" site_name="accounts" href="/settings/accounts" />
-                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Appearance" site_name="appearance" href="/settings/appearance" />
-                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Security" site_name="security" href="/settings/security" />
+                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="General" site_name="general" href="/settings#general" />
+                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Accounts" site_name="accounts" href="/settings#accounts" />
+                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Appearance" site_name="appearance" href="/settings#appearance" />
+                <SideNavButton bind:site={subsite} {active_variant} {default_variant} {active_classes} name="Security" site_name="security" href="/settings#security" />
         </div>
         <div class="flex-1">
             <slot />
