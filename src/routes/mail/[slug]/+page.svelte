@@ -10,14 +10,11 @@
 
     export let data: PageData;
 	$: ready = false;
-    $: visible_emails = 50;
+    $: visible_emails = $settings.lazyLoading.enabled ? $settings.lazyLoading.amount : 99999;
     let email_view: HTMLDivElement;
 
 	onMount(() => {
 		ready = true;
-        if (!$settings.lazyLoadingEnabled) {
-            visible_emails = 99999;
-        }
 	});
 
     $: filteredEmails = $emails.filter(email => {
@@ -39,7 +36,7 @@
         const target = e.target as HTMLDivElement;
         // at 3/4 of the scroll height, load more emails
         if (target.scrollTop + target.clientHeight >= target.scrollHeight - 300) {
-            visible_emails += 25;
+            visible_emails = Number(visible_emails) + Number($settings.lazyLoading.amount);
             if (visible_emails > filteredEmails.length) {
                 visible_emails = filteredEmails.length;
             }

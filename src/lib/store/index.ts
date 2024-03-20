@@ -14,6 +14,7 @@ export {
     emails,
     fetchEmails,
     emailSortDateFunction,
+    placeholderEmail,
 } from './emails';
 
 export {

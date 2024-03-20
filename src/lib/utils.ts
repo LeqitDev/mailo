@@ -112,3 +112,5 @@ export function formatTimestamp(date: Date): string {
         return `${seconds} seconds ago`;
     }
 }
+
+export type ButtonTypes = "link" | "default" | "ghost" | "secondary" | "destructive" | "outline";

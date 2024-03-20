@@ -38,19 +38,19 @@
 	<div slot="mail-sidebar">
 		{#if ready}
 			<div class="grid gap-1 border-b pb-2" class:pl-6={$expandedSidenav} transition:slide>
-				<SideNavButton site={current_mailbox} name="Inbox" site_name="inbox" size="sm" href="/mail/inbox" active_variant="secondary" clicked={() => {
+				<SideNavButton bind:expanded={$expandedSidenav} site={current_mailbox} name="Inbox" site_name="inbox" size="sm" href="/mail/inbox" active_variant="secondary" clicked={() => {
 					if (current_mailbox !== 'inbox') selected_previews.update(() => []);
 					current_mailbox = 'inbox';
 				}}><InboxIcon class="h-4 w-4" /></SideNavButton>
-				<SideNavButton site={current_mailbox} name="Sent" site_name="sent" size="sm" href="/mail/sent" active_variant="secondary" clicked={() => {
+				<SideNavButton bind:expanded={$expandedSidenav} site={current_mailbox} name="Sent" site_name="sent" size="sm" href="/mail/sent" active_variant="secondary" clicked={() => {
 					if (current_mailbox !== 'sent') selected_previews.update(() => []);
 					current_mailbox = 'sent';
 				}}><SendIcon class="h-4 w-4" /></SideNavButton>
-				<SideNavButton site={current_mailbox} name="Drafts" site_name="drafts" size="sm" href="/mail/drafts" active_variant="secondary" clicked={() => {
+				<SideNavButton bind:expanded={$expandedSidenav} site={current_mailbox} name="Drafts" site_name="drafts" size="sm" href="/mail/drafts" active_variant="secondary" clicked={() => {
 					if (current_mailbox !== 'drafts') selected_previews.update(() => []);
 					current_mailbox = 'drafts';
 				}}><FileIcon class="h-4 w-4" /></SideNavButton>
-				<SideNavButton site={current_mailbox} name="Trash" site_name="trash" size="sm" href="/mail/trash" active_variant="secondary" clicked={() => {
+				<SideNavButton bind:expanded={$expandedSidenav} site={current_mailbox} name="Trash" site_name="trash" size="sm" href="/mail/trash" active_variant="secondary" clicked={() => {
 					if (current_mailbox !== 'trash') selected_previews.update(() => []);
 					current_mailbox = 'trash';
 				}}><Trash2Icon class="h-4 w-4" /></SideNavButton>

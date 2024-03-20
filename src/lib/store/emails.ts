@@ -21,6 +21,26 @@ export function emailSortDateFunction(a: Data.Email, b: Data.Email) {
     return parseDate(b.date).getTime() - parseDate(a.date).getTime();
 }
 
+export const placeholderEmail: Data.Email = {
+    id: "-1",
+    email_id: "-49",
+    account_id: "-1",
+    subject: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    body: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    date: '1970-1-1 0:0:0',
+    sender: 'Mr. Placeholder <placeholder.steve@placeholder.com>',
+    flags: {
+        seen: false,
+        answered: false,
+        flagged: false,
+        deleted: false,
+        draft: false,
+        recent: false,
+        may_create: false,
+        custom: [],
+    },
+}
+
 function parseDate(date: string) {
     // parse "2024-2-3 20:8:9" to date object
     const [datePart, timePart] = date.split(' ');

@@ -44,7 +44,11 @@ declare global {
 
 		interface Settings {
 			theme: 'light' | 'dark';
-			lazyLoadingEnabled: boolean;
+			lazyLoading: {
+				enabled: boolean;
+				amount: number;
+			}
+			dashboardViewCount: number;
 			backendSettings: BackendSettings;
 			dashboardEmailFilter: "unseen" | "recent" | "favorite" | "accountSpecific";
 			dashboardEmailFilterAccountId?: string;

@@ -48,7 +48,7 @@
 				imap_host: formData.get('imap_host') as string,
 				imap_port: parseInt(formData.get('imap_port') as string),
 				username: formData.get('username') as string,
-				display_name: formData.get('display_name') as string,
+				display_name: formData.get('display_name') as string
 			};
 			const password = formData.get('password') as string;
 			if (password === '') {
@@ -82,11 +82,13 @@
 				.then((result) => {
 					open = false;
 					fetchAccounts();
-					invoke('start_specific_imap_thread', { id: account.id, account: account }).then(() => {
-						console.log('imap thread started');
-					}).catch((error) => {
-						console.log('error', error);
-					});
+					invoke('start_specific_imap_thread', { id: account.id, account: account })
+						.then(() => {
+							console.log('imap thread started');
+						})
+						.catch((error) => {
+							console.log('error', error);
+						});
 					toast('Account updated successfully');
 				})
 				.catch((error) => {
@@ -112,7 +114,7 @@
 
 <Dialog.Root bind:open>
 	<Dialog.Trigger><slot /></Dialog.Trigger>
-	<Dialog.Content class="sm:max-w-lg">
+	<Dialog.Content class="w-screen max-w-none lg:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title>Account settings</Dialog.Title>
 			<Dialog.Description>Update your account information</Dialog.Description>
@@ -120,72 +122,82 @@
 		<div class="flex gap-4">
 			<div class="w-full">
 				<form method="POST" use:enhance id={`account-settings-form-${account.id}`} class="w-full">
-					<Form.Field {form} name="display_name">
-						<Form.Control let:attrs>
-							<Form.Label>Display Name</Form.Label>
-							<Input {...attrs} bind:value={$formData.display_name} type="text" />
-						</Form.Control>
-						<!-- <Form.Description>This is your public display name.</Form.Description> -->
-						<Form.FieldErrors />
-					</Form.Field>
-					<div class="flex">
-						<Form.Field {form} name="email" class="grow">
+					<div class="flex gap-6 lg:block">
+						<Form.Field {form} name="display_name" class="flex-1">
 							<Form.Control let:attrs>
-								<Form.Label>Email</Form.Label>
-								<Input {...attrs} bind:value={$formData.email} type="email" />
+								<Form.Label>Display Name</Form.Label>
+								<Input {...attrs} bind:value={$formData.display_name} type="text" />
 							</Form.Control>
 							<!-- <Form.Description>This is your public display name.</Form.Description> -->
 							<Form.FieldErrors />
 						</Form.Field>
-						<div class="px-6">
-							<Label>Avatar</Label>
-							<Avatar.Root class="mt-2">
-								<Avatar.Image
-									src="https://api.dicebear.com/7.x/shapes/svg?seed={hashStr($formData.email)}"
-									alt="Profile picture"
-								/>
-								<Avatar.Fallback>{getEmailInitials(account.email)}</Avatar.Fallback>
-							</Avatar.Root>
+						<div class="flex flex-1">
+							<Form.Field {form} name="email" class="grow">
+								<Form.Control let:attrs>
+									<Form.Label>Email</Form.Label>
+									<Input {...attrs} bind:value={$formData.email} type="email" />
+								</Form.Control>
+								<!-- <Form.Description>This is your public display name.</Form.Description> -->
+								<Form.FieldErrors />
+							</Form.Field>
+							<div class="px-6">
+								<Label>Avatar</Label>
+								<Avatar.Root class="mt-2">
+									<Avatar.Image
+										src="https://api.dicebear.com/7.x/shapes/svg?seed={hashStr($formData.email)}"
+										alt="Profile picture"
+									/>
+									<Avatar.Fallback>{getEmailInitials(account.email)}</Avatar.Fallback>
+								</Avatar.Root>
+							</div>
 						</div>
 					</div>
+
 					<h1 class="mt-6 text-lg font-semibold leading-none tracking-tight">Login Information</h1>
 					<p class="mb-2 pt-1.5 text-sm text-muted-foreground">Manage your login information</p>
-					<Form.Field {form} name="username">
-						<Form.Control let:attrs>
-							<Form.Label>Username</Form.Label>
-							<Input {...attrs} bind:value={$formData.username} />
-						</Form.Control>
-						<!-- <Form.Description>This is your public display name.</Form.Description> -->
-						<Form.FieldErrors />
-					</Form.Field>
-					<Form.Field {form} name="password">
-						<Form.Control let:attrs>
-							<Form.Label>Password</Form.Label>
-							<Input {...attrs} bind:value={$formData.password} type="password" />
-						</Form.Control>
-						<!-- <Form.Description>This is your public display name.</Form.Description> -->
-						<Form.FieldErrors />
-					</Form.Field>
+					<div class="flex gap-6 lg:block">
+						<Form.Field {form} name="username" class="flex-1">
+							<Form.Control let:attrs>
+								<Form.Label>Username</Form.Label>
+								<Input {...attrs} bind:value={$formData.username} />
+							</Form.Control>
+							<!-- <Form.Description>This is your public display name.</Form.Description> -->
+							<Form.FieldErrors />
+						</Form.Field>
+						<Form.Field {form} name="password" class="flex-1">
+							<Form.Control let:attrs>
+								<Form.Label>Password</Form.Label>
+								<Input {...attrs} bind:value={$formData.password} type="password" />
+							</Form.Control>
+							<!-- <Form.Description>This is your public display name.</Form.Description> -->
+							<Form.FieldErrors />
+						</Form.Field>
+					</div>
+
 					<h1 class="mt-6 text-lg font-semibold leading-none tracking-tight">Imap Information</h1>
 					<p class="mb-2 pt-1.5 text-sm text-muted-foreground">Set your imap information</p>
-					<Form.Field {form} name="imap_host">
-						<Form.Control let:attrs>
-							<Form.Label>Imap Host</Form.Label>
-							<Input {...attrs} bind:value={$formData.imap_host} />
-						</Form.Control>
-						<!-- <Form.Description>This is your public display name.</Form.Description> -->
-						<Form.FieldErrors />
-					</Form.Field>
-					<Form.Field {form} name="imap_port">
-						<Form.Control let:attrs>
-							<Form.Label>Imap Port</Form.Label>
-							<Input {...attrs} bind:value={$formData.imap_port} />
-						</Form.Control>
-						<!-- <Form.Description>This is your public display name.</Form.Description> -->
-						<Form.FieldErrors />
-					</Form.Field>
-					<!-- <Form.Button class="mt-2 w-36" disabled={!form_changed}>Save</Form.Button> -->
-					<!-- <Button form="account-settings-form" type="submit" class="rounded-3xl" size="lg">Save</Button> -->
+					<div class="flex gap-6 lg:block">
+						<div>
+							<Form.Field {form} name="imap_host" class="flex-1">
+								<Form.Control let:attrs>
+									<Form.Label>Imap Host</Form.Label>
+									<Input {...attrs} bind:value={$formData.imap_host} />
+								</Form.Control>
+								<!-- <Form.Description>This is your public display name.</Form.Description> -->
+								<Form.FieldErrors />
+							</Form.Field>
+						</div>
+						<div>
+							<Form.Field {form} name="imap_port" class="flex-1">
+								<Form.Control let:attrs>
+									<Form.Label>Imap Port</Form.Label>
+									<Input {...attrs} bind:value={$formData.imap_port} />
+								</Form.Control>
+								<!-- <Form.Description>This is your public display name.</Form.Description> -->
+								<Form.FieldErrors />
+							</Form.Field>
+						</div>
+					</div>
 				</form>
 			</div>
 		</div>
@@ -196,30 +208,32 @@
 				</AlertDialog.Trigger>
 				<AlertDialog.Content>
 					<AlertDialog.Header>
-					<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
+						<AlertDialog.Title>Are you absolutely sure?</AlertDialog.Title>
 						<AlertDialog.Description>
-							This action cannot be undone. This will permanently delete your account
-							and remove your data.
+							This action cannot be undone. This will permanently delete your account and remove
+							your data.
 						</AlertDialog.Description>
 					</AlertDialog.Header>
 					<AlertDialog.Footer>
 						<AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-						<AlertDialog.Action on:click={() => {
-							invoke('delete_account', { id: account.id })
-								.then((result) => {
-									open = false;
-									fetchAccounts();
-									toast('Account deleted successfully');
-								})
-								.catch((error) => {
-									console.log('error', error);
-								});
-						}}>Continue</AlertDialog.Action>
+						<AlertDialog.Action
+							on:click={() => {
+								invoke('delete_account', { id: account.id })
+									.then((result) => {
+										open = false;
+										fetchAccounts();
+										toast('Account deleted successfully');
+									})
+									.catch((error) => {
+										console.log('error', error);
+									});
+							}}>Continue</AlertDialog.Action
+						>
 					</AlertDialog.Footer>
 				</AlertDialog.Content>
 			</AlertDialog.Root>
 			<Button type="submit" form={`account-settings-form-${account.id}`} disabled={!form_changed}
-			>Save changes</Button
+				>Save changes</Button
 			>
 		</Dialog.Footer>
 	</Dialog.Content>

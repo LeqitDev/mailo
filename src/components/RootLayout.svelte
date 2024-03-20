@@ -123,15 +123,15 @@
 
 <main class="flex h-full w-full">
 	<div class="flex h-full flex-col gap-2 border-r p-1 pt-2" class:min-w-60={$expandedSidenav}>
-		<SideNavButton {site} name="Home" site_name="home" href="/"><HomeIcon /></SideNavButton>
-		<SideNavButton {site} name="Mail" site_name="mail" href="/mail/inbox"
+		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Home" site_name="home" href="/"><HomeIcon /></SideNavButton>
+		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Mail" site_name="mail" href="/mail/inbox"
 			><MailIcon /></SideNavButton
 		>
 		<slot name="mail-sidebar" />
-		<SideNavButton {site} name="Calendar" site_name="calendar" href="/calendar"
+		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Calendar" site_name="calendar" href="/calendar"
 			><CalendarIcon /></SideNavButton
 		>
-		<SideNavButton {site} name="Settings" site_name="settings" href="/settings"
+		<SideNavButton {site} bind:expanded={$expandedSidenav} name="Settings" site_name="settings" href="/settings"
 			><SettingsIcon /></SideNavButton
 		>
 		<Button

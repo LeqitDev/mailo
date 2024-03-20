@@ -8,7 +8,11 @@ export const readyCheck: Writable<{ ready: boolean, events_registered: boolean }
 
 const defaultSettings: Data.Settings = {
     theme: 'light',
-    lazyLoadingEnabled: true,
+    lazyLoading: {
+        enabled: true,
+        amount: 25,
+    },
+    dashboardViewCount: 10,
     backendSettings: {
         masterpassword: false,
     },

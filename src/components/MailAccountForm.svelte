@@ -14,26 +14,6 @@
     export let form_data: SuperValidated<Infer<MailAccount>>;
     export let onSuccessfulSubmit: () => void = () => {};
 
-    /* const options: FormOptions<MailAccount> = {
-        validators: mailAccountSchema,
-        applyAction: false,
-        onSubmit: (values) => {
-            var form = new FormData(values.formElement);
-            
-            invoke('add_account', parseAccountForm(form)).then((result) => {
-                onSuccessfulSubmit();
-                fetchAccounts();
-                toast('Account added successfully');
-            }).catch((error) => {
-                console.log('error', error);
-            });
-        },
-
-        onError: (errors) => {
-            console.log('errors', errors);
-        }
-    } */
-
     const form = superForm(form_data, {
         validators: zodClient(mailAccountSchema),
         onSubmit(input) {
