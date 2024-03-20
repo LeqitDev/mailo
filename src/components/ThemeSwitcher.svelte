@@ -9,6 +9,7 @@
 
     export let size: "md" | "lg" = "md";
 	export let title = "Change your theme";
+	export let minimal = false;
 
     let lg_size_classes = "h-[7.5rem] w-screen max-w-lg";
 	let md_size_classes = "h-20 w-80";

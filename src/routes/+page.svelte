@@ -18,6 +18,7 @@
 	import EditAccountDialog from '§/components/EditAccountDialog.svelte';
 	import ThemeSwitcher from '§/components/ThemeSwitcher.svelte';
 	import AccountViewer from '§/components/AccountViewer.svelte';
+	import MinimalThemeSwitcher from '§/components/MinimalThemeSwitcher.svelte';
 
 	export let data: PageData;
 	console.log('data', data);
@@ -71,7 +72,7 @@
 					<AccountViewer {data} />
 				</div>
 				<div class="mt-4 rounded-sm px-4 pb-4 pt-1">
-					<ThemeSwitcher />
+					<MinimalThemeSwitcher />
 				</div>
 			</div>
 		</div>

@@ -11,6 +11,7 @@
 	import { Label } from '@/components/ui/label';
 	import { Button } from '@/components/ui/button';
 	import { Switch } from '@/components/ui/switch';
+	import MinimalThemeSwitcher from '§/components/MinimalThemeSwitcher.svelte';
 
 	export let data: PageData;
 
@@ -90,7 +91,7 @@
 					<p id="appearance" class="text-2xl font-semibold">Appearance</p>
 					<hr class="mt-1" />
 				</div>
-				<ThemeSwitcher size="lg" title="Theme" />
+				<MinimalThemeSwitcher size="lg" title="Theme" />
 				<div class="grid gap-4">
 					<div class="grid gap-1">
 						<p class="text-xl font-semibold">Dashboard email view count</p>
