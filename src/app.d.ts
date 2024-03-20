@@ -47,7 +47,8 @@ declare global {
 			lazyLoading: {
 				enabled: boolean;
 				amount: number;
-			}
+			};
+			masterpassword: string;
 			dashboardViewCount: number;
 			dashboardEmailFilter: "unseen" | "recent" | "favorite" | "accountSpecific";
 			dashboardEmailFilterAccountId?: string;

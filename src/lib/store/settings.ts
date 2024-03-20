@@ -12,6 +12,7 @@ const defaultSettings: Data.Settings = {
         enabled: true,
         amount: 25,
     },
+    masterpassword: "",
     dashboardViewCount: 10,
     dashboardEmailFilter: "unseen"
 }
