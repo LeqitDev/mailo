@@ -151,7 +151,7 @@
                 </div>
 			</div>
 		</div>
-		<div class="h-full w-full overflow-auto p-2">
+		<div class="h-96 w-full overflow-auto p-2">
 			{#if $events}
 				{#each $events as event}
 					<div class="flex gap-3">

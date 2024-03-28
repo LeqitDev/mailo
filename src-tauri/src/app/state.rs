@@ -2,9 +2,15 @@ use std::path::PathBuf;
 
 use rusqlite::Connection;
 
-use crate::{database::get_database, settings::{SettingsTrait, SettingsWrapper}};
+use crate::{
+    database::get_database,
+    settings::{SettingsTrait, SettingsWrapper},
+};
 
-use super::{events::{ActionPayload, FrontendEvent, LoggerPayload, LoggerType, NotifyPayload}, imap_thread::ImapThread};
+use super::{
+    events::{ActionPayload, FrontendEvent, LoggerPayload, LoggerType, NotifyPayload},
+    imap_thread::ImapThread,
+};
 
 #[derive(Default)]
 pub struct Shareble {
@@ -35,7 +41,7 @@ impl Shareble {
                 session_master_password: None,
             },
             Err(e) => {
-                println!("Failed to get database connection: {:#?}", e);
+                log::error!("Failed to get database connection: {:#?}", e);
                 Self {
                     sql: None,
                     logout: false,

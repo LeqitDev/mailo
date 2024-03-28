@@ -5,12 +5,15 @@ use tauri::{AppHandle, Manager};
 use crate::app::{events::FrontendEvent, state::Shareble};
 
 pub fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: AppHandle) {
+    log::info!("Starting frontend event dispatch loop");
     tauri::async_runtime::spawn(async move {
         loop {
             // stop the loop if the app is logging out
             if app_state.lock().unwrap().logout {
+                log::info!("Stopping frontend event dispatch loop, app is logging out");
                 break;
             }
+
             if let Ok(mut app_state) = app_state.lock() {
                 // wait for the frontend to be ready
                 if !app_state.frontend_ready {
@@ -30,7 +33,7 @@ pub fn frontend_event_dispatch_loop(app_state: Arc<Mutex<Shareble>>, handle: App
                     }
                 });
                 if !events.is_empty() {
-                    println!("Sending events to frontend: {:#?}", events);
+                    log::debug!("Sending events to frontend: {:#?}", events);
                     // TODO: weird thing the third event does not fire
                     // dispatch the different events to the frontend
                     for event in events {

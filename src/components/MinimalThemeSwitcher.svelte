@@ -33,17 +33,17 @@
 	<p class="mb-2 text-xl font-semibold">{title}</p>
 	<RadioGroup.Root
 		value={$settings.theme}
-		class={`${size == 'lg' ? 'flex' : ''} gap-4`}
+		class={`${size == 'lg' ? 'flex' : ''} gap-4 overflow-hidden`}
 		onValueChange={onThemeSelected}
 	>
-		<div class="flex space-x-2">
-			<RadioGroup.Item value="light" id="light" class="sr-only" />
+		<div class="flex space-x-2 overflow-hidden">
+			<RadioGroup.Item value="light" id="light" class="hidden sr-only" />
 			<Label for="light" class="cursor-pointer">
 				<div
 					class={`mt-2 overflow-clip ${sizes[size]} flex rounded-sm border bg-background dark:border-muted-foreground dark:bg-foreground dark:outline-none outline outline-2 outline-blue-400`}
 				>
 					<div
-						class="flex h-screen w-6 flex-col items-center gap-1 border-r pt-1 dark:bg-foreground"
+						class="flex w-6 flex-col items-center gap-1 border-r pt-1 dark:bg-foreground"
 					>
 						<!-- Sidebar -->
 						<div class="h-4 w-4 rounded-sm bg-foreground dark:bg-[hsl(0_0%_3.9%)] p-1">
@@ -154,15 +154,15 @@
                 <p class="w-96 text-center pt-2">Light</p>
 			</Label>
 		</div>
-		<div class="flex space-x-2">
-			<RadioGroup.Item value="dark" id="dark" class="sr-only"/>
+		<div class="flex space-x-2 overflow-hidden">
+			<RadioGroup.Item value="dark" id="dark" class="hidden sr-only"/>
 			<Label for="dark" class="cursor-pointer"
 				>
 				<div
 					class={`mt-2 overflow-clip ${sizes[size]} flex rounded-sm border bg-foreground dark:border-muted-foreground dark:bg-background dark:outline outline-2 outline-blue-400`}
 				>
 					<div
-						class="flex h-screen w-6 flex-col items-center gap-1 border-r pt-1 bg-foreground dark:bg-background"
+						class="flex w-6 flex-col items-center gap-1 border-r pt-1 bg-foreground dark:bg-background"
 					>
 						<!-- Sidebar -->
 						<div class="h-4 w-4 rounded-sm dark:bg-foreground bg-[hsl(0_0%_98%)] p-1">

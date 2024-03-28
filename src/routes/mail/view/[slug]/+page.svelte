@@ -55,7 +55,7 @@
         </div>
         <div class="flex-1 overflow-y-auto">
             <div class="p-2">
-                {@html body.replaceAll("<a", "<a class='underline text-muted-foreground'")}
+                {@html body.replaceAll("<a", "<a class='underline text-muted-foreground'").replaceAll(/<style>(.|\n|\r\n|\n\r)*<\/style>/g, '').replaceAll(/style=".*?"/g, '')}
             </div>
         </div>
     </div>

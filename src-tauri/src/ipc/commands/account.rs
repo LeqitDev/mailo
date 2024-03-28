@@ -1,5 +1,7 @@
-
-use crate::{app::AppState, database::account::{Account, AccountTable}};
+use crate::{
+    app::AppState,
+    database::account::{Account, AccountTable},
+};
 use base64::prelude::*;
 
 #[tauri::command]
@@ -43,7 +45,7 @@ pub fn add_account(
     imap_host: String,
     imap_port: i64,
 ) -> Result<(), String> {
-    println!("Adding account: {:#?}", email);
+    log::info!("Adding account: {:#?}", email);
     if let Ok(state) = state.0.lock() {
         let password = {
             if state.settings_wrapper.settings.master_password {
@@ -52,9 +54,8 @@ pub fn add_account(
                 BASE64_STANDARD.encode(password)
             }
         };
-        println!("Added account: {}", password);
         if let Some(conn) = state.sql.as_ref() {
-            println!("Added account: {:#?}", email);
+            log::info!("Added account: {:#?}", email);
             Account::new(-1, email, username, password, imap_host, imap_port, None)
                 .push(conn)
                 .map_err(|e| e.to_string())

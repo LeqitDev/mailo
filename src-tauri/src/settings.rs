@@ -30,13 +30,13 @@ pub trait SettingsTrait {
 
 impl SettingsTrait for SettingsWrapper {
     fn save(&self) {
-        println!("Saving settings to: {:#?}", self.path);
+        log::info!("Saving settings to: {:#?}", self.path);
         if let Ok(mut file) = File::create(self.path.clone()) {
             file.write_all(serde_json::to_string(&self.settings).unwrap().as_bytes())
                 .unwrap();
             drop(file);
         } else {
-            println!("Failed to save settings");
+            log::error!("Failed to save settings");
         }
     }
 
@@ -46,12 +46,14 @@ impl SettingsTrait for SettingsWrapper {
             let mut contents = String::new();
             buf_reader.read_to_string(&mut contents).unwrap();
             drop(buf_reader);
-            if let Ok(mut ret) = serde_json::from_str::<Settings>(&contents) {
+            if let Ok(ret) = serde_json::from_str::<Settings>(&contents) {
                 Self::new(path, ret)
             } else {
+                log::warn!("Failed to parse settings, using default settings");
                 Self::new(path, Settings::default())
             }
         } else {
+            log::warn!("Failed to load settings, using default settings");
             Self::new(path, Settings::default())
         }
     }

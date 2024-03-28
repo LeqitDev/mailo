@@ -29,6 +29,8 @@ base64 = "0.22.0"
 notify-rust = "4.10.0"
 rusqlite_migration = "1.1.0"
 stop-token = "0.7.0"
+log = {version = "0.4.21", features = ["max_level_debug", "release_max_level_warn"] }
+simple_logger = "4.3.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

@@ -10,6 +10,7 @@
 	export let email: Data.Email;
 	export var id: number;
 	export let variant: "default" | "compact" = "default";
+	export let onClick: () => void = () => {};
 
 	var checked: boolean = false;
 	var redirect_btn: HTMLAnchorElement;
@@ -55,6 +56,7 @@
 		} else {
 			$selected_previews = [id];
 		}
+		onClick();
 		console.log($selected_previews);
 	}
 
@@ -98,16 +100,20 @@
 			</div>
 		{/if}
 		<div class="flex-grow">
-			<h2 class="font-bold">{email.sender}</h2>
-			<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
-				{email.subject}
-			</h3>
+			<div class="flex justify-between">
+				<div>
+					<h2 class="font-bold">{email.sender}</h2>
+					<h3 class="line-clamp-1 overflow-ellipsis font-semibold">
+						{email.subject}
+					</h3>
+				</div>
+				<div>
+					<p class="w-max text-muted-foreground">{formatTimestamp(date)}</p>
+				</div>
+			</div>
 			<p class="overflow-ellipsis text-muted-foreground" class:line-clamp-1={variant === "compact"} class:line-clamp-2={variant === "default"}>
 				{email.body.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/g, "").replaceAll(/\r?\n|\r|\n\r|<br>|<br\>/g, " ").replace(/<\/?[^>]+(>|$)/g, "").replace(/&[^;]+;/g, " ")}
 			</p>
-		</div>
-		<div>
-			<p class="w-max text-muted-foreground">{formatTimestamp(date)}</p>
 		</div>
 	</button>
 		</ContextMenu.Trigger>

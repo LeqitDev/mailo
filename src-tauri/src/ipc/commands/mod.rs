@@ -1,47 +1,41 @@
 use tauri::AppHandle;
 
-use crate::app::AppState;
+use crate::app::{state, AppState};
 
 mod account;
 mod email;
+mod event;
 mod imap;
 mod settings;
-mod event;
 
 pub use account::*;
 pub use email::*;
+pub use event::*;
 pub use imap::*;
 pub use settings::*;
-pub use event::*;
 
 #[tauri::command]
 pub async fn logout(state: tauri::State<'_, AppState>, app: AppHandle) -> Result<(), String> {
-    let mut handles = vec![1];
     {
         let mut state = state.0.lock().unwrap();
+        if state.logout {
+            return Ok(());
+        }
         state.logout = true;
         state.save();
-        /* for imap_thread_idx in 0..state.imap_threads.len() - 1 {
-            handles.push(state.imap_threads.remove(imap_thread_idx));
-        } */
     }
 
-    /* println!("closing {} imap threads", handles.len());
-
-    for handle in handles {
-        println!("closing imap thread: {}", handle.account_id);
-        // handle.stop().await;
-    } */
     let mut timeout: u8 = 0;
     loop {
-        if state.0.lock().unwrap().imap_threads.len() == 0 {
+        if state.0.lock().unwrap().imap_threads.is_empty() {
             break;
         } else {
-            println!("waiting for imap threads to close: {}", timeout);
-            if timeout > 5 {
-                for imap_thread in 0..state.0.lock().unwrap().imap_threads.len() -1 {
-                    state.0.lock().unwrap().imap_threads.remove(imap_thread).handle.abort();
+            log::info!("waiting for imap threads to close: {}", timeout);
+            if timeout > 10 {
+                for imap_thread in &state.0.lock().unwrap().imap_threads {
+                    imap_thread.handle.abort();
                 }
+                break;
             }
         }
         timeout += 1;
@@ -53,7 +47,7 @@ pub async fn logout(state: tauri::State<'_, AppState>, app: AppHandle) -> Result
 
 #[tauri::command]
 pub fn ready(state: tauri::State<AppState>) {
-    println!("Frontend is ready");
+    log::info!("Frontend is ready");
     if let Ok(mut state) = state.0.lock() {
         state.frontend_ready = true;
     }

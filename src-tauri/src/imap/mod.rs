@@ -2,6 +2,7 @@ use std::{
     error::Error,
     str::from_utf8,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use async_imap::Session;
@@ -12,7 +13,10 @@ use tokio::net::TcpStream;
 
 use crate::{
     app::events::EventDispatcher,
-    database::{account::Account, email::{Email, EmailTable}},
+    database::{
+        account::Account,
+        email::{Email, EmailTable},
+    },
     Shareble,
 };
 
@@ -22,7 +26,8 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
             let mut idle = session.idle();
             idle.init().await.unwrap();
             loop {
-                let (idle_wait, interrupt) = idle.wait();
+                log::info!("Idling for account {}", account.id);
+                let (idle_wait, interrupt) = idle.wait_with_timeout(Duration::from_secs(60 * 10));
 
                 let controll_app_state = app_state.clone();
                 let idle_stop = Arc::new(Mutex::new(false));
@@ -39,30 +44,50 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                         async_imap::extensions::idle::IdleResponse::ManualInterrupt => {
                             break;
                         }
-                        async_imap::extensions::idle::IdleResponse::Timeout => {}
+                        async_imap::extensions::idle::IdleResponse::Timeout => {
+                            // End the IDLE state and get the session
+                            let session = idle.done().await.unwrap();
+
+                            idle = session.idle();
+                            idle.init().await.unwrap();
+                        }
                         async_imap::extensions::idle::IdleResponse::NewData(data) => {
                             // Convert the incoming data into a byte vector and parse it
                             let bytes = data.borrow_owner().to_vec();
                             let msg = from_utf8(bytes.as_slice()).unwrap_or("");
                             let splitted_msg: Vec<&str> = msg.split(' ').collect();
-                            let email_id = splitted_msg.get(1).unwrap_or(&"").parse::<u32>().unwrap_or(0);
-                            println!("New data: {} {}", msg, email_id);
+                            let email_id = splitted_msg
+                                .get(1)
+                                .unwrap_or(&"")
+                                .parse::<u32>()
+                                .unwrap_or(0);
+                            log::debug!("New data: {} {}", msg, email_id);
 
                             // If the message indicates new emails exist
                             if splitted_msg.get(2).unwrap().contains("EXISTS") {
+                                log::info!("New email(s) detected!");
+
                                 // End the IDLE state and get the session
                                 let mut session = idle.done().await.unwrap();
 
                                 // Fetch the new emails and build a notification body
                                 let mut notification_body = String::new();
-                                fetch_emails(&mut app_state, &mut session, account.clone(), email_id, -1)
-                                    .await
-                                    .iter()
-                                    .for_each(|email| {
-                                        notification_body.push_str(&email.subject);
-                                        notification_body.push('\n');
-                                        email.push(app_state.lock().unwrap().sql.as_ref().unwrap()).unwrap();
-                                    });
+                                fetch_emails(
+                                    &mut app_state,
+                                    &mut session,
+                                    account.clone(),
+                                    email_id,
+                                    -1,
+                                )
+                                .await
+                                .iter()
+                                .for_each(|email| {
+                                    notification_body.push_str(&email.subject);
+                                    notification_body.push('\n');
+                                    email
+                                        .push(app_state.lock().unwrap().sql.as_ref().unwrap())
+                                        .unwrap();
+                                });
 
                                 // Notify the user of the new emails and trigger the fetch_emails action
                                 app_state.notify("New email(s)", &notification_body);
@@ -74,31 +99,36 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
                             }
                         }
                     }
+                    log::info!("Idle done");
                     *idle_stop.lock().unwrap() = true;
                 } else {
-                    app_state.log_error(idle_result.err().unwrap());
+                    log::error!("Error while idling: {}", idle_result.err().unwrap());
+                    // app_state.log_error(idle_result.err().unwrap());
                 }
             }
 
             let session = idle.done().await; // TODO: is error sometimes?
             app_state.log_info("Logging out from imap!");
-            println!("Logging out from imap!");
+            log::info!("Logging out from imap!");
             match session {
                 Ok(mut session) => {
                     if let Err(e) = session.logout().await {
+                        log::error!("Error while logging out from imap: {}", e);
                         app_state.log_error(e);
                     }
                 }
                 Err(e) => {
+                    log::error!("Error retrieving session to logout: {}", e);
                     app_state.log_error(e);
                 }
             }
         }
         Err(e) => {
+            log::error!("Error while initializing imap: {}", e);
             app_state.log_error(e);
         }
     }
-    
+
     // Remove the thread from the list
     if let Ok(mut state) = app_state.lock() {
         if let Some(imap_thread_idx) = state
@@ -107,7 +137,11 @@ pub async fn run_imap(mut app_state: Arc<Mutex<Shareble>>, account: Account) {
             .position(|thread| thread.account_id == account.id)
         {
             drop(state.imap_threads.remove(imap_thread_idx));
-            println!("Removed imap thread: {}, array length: {}", account.id, state.imap_threads.len());
+            log::info!(
+                "Removed imap thread: {}, array length: {}",
+                account.id,
+                state.imap_threads.len()
+            );
         }
     }
 }
@@ -121,6 +155,7 @@ fn state_observer(
     loop {
         // if all threads are stopped, stop the idle
         if app_state.lock().unwrap().logout || *idle_stop.lock().unwrap() {
+            log::info!("Stopping imap idle");
             drop(interrupt);
             break;
         }
@@ -134,6 +169,7 @@ fn state_observer(
             .find(|thread| thread.account_id == account_id)
         {
             if thread.stop {
+                log::info!("Stopping imap idle");
                 drop(interrupt);
                 break;
             }
@@ -153,19 +189,24 @@ async fn initiliaze_imap(
     let tls_stream = tls.connect(account.imap_host.as_str(), tcp_stream).await?;
 
     let client = async_imap::Client::new(tls_stream);
-    app_state.log_info(format!("-- connected to {}:{}", imap_addr.0, imap_addr.1));
+    log::info!("Connected to server {}:{}", imap_addr.0, imap_addr.1);
+    // app_state.log_info(format!("-- connected to {}:{}", imap_addr.0, imap_addr.1));
 
     let mut imap_session = client
         .login(account.username.clone(), account.password.clone())
         .await
         .map_err(|e| e.0)?;
-    app_state.log_info(format!("-- logged in a {}", account.username));
-
+    log::info!(
+        "Logged in as {}, acount_id {}",
+        account.username,
+        account.id
+    );
+    // app_state.log_info(format!("-- logged in a {}", account.username));
 
     // Select the INBOX mailbox
     let mailbox = imap_session.select("INBOX").await?;
-    app_state.log_info(format!("-- select a mailbox: {:?}", mailbox));
-
+    log::info!("Selected mailbox: {:?}", mailbox);
+    // app_state.log_info(format!("-- select a mailbox: {:?}", mailbox));
 
     // Fetch emails based on the last email in the database
     let last_email = app_state
@@ -215,7 +256,7 @@ async fn initiliaze_imap(
         Err(e) => match e {
             rusqlite::Error::QueryReturnedNoRows => {
                 // if there are no emails yet fetch all
-                app_state.log_info("No emails found in the database! Try fetching all emails!");
+                log::info!("No emails found in the database! Try fetching all emails!");
                 fetch_emails(app_state, &mut imap_session, account, 1, -1)
                     .await
                     .iter()
@@ -226,6 +267,7 @@ async fn initiliaze_imap(
                     });
             }
             _ => {
+                log::error!("Error while fetching last email: {}", e);
                 app_state.log_info(e.to_string());
             }
         },
@@ -258,7 +300,11 @@ async fn fetch_emails(
         .unwrap();
 
     let messages: Vec<_> = messages_stream.try_collect().await.unwrap();
-    app_state.log_info(format!("Fetched {} new emails!", messages.len()));
+    log::info!(
+        "Fetched {} new emails! For account {}",
+        messages.len(),
+        account.id
+    );
 
     // Parse the messages
     for raw_message in messages {
